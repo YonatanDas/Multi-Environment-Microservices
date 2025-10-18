@@ -1,0 +1,21 @@
+# Maven / Java
+target/
+*.class
+*.log
+*.jar
+*.war
+*.ear
+
+# IntelliJ / VSCode / Cursor / Eclipse
+.idea/
+.vscode/
+*.iml
+.project
+.settings/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Docker
+*.env

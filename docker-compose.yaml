@@ -1,0 +1,111 @@
+version: "3.9"
+
+networks:
+  banking-app-net:
+    driver: bridge
+
+services:
+  # 🏗️ 1. Config Server (must start first)
+  configserver:
+    image: yonatandas/configserver:v1
+    container_name: configserver
+    ports:
+      - "8071:8071"
+    networks:
+      - banking-app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8071/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  # 🏦 2. Accounts Service
+  accounts:
+    image: yonatandas/accounts:v1
+    container_name: accounts
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configserver:8071/
+    ports:
+      - "8080:8080"
+    networks:
+      - banking-app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  # 💳 3. Cards Service
+  cards:
+    image: yonatandas/cards:v1
+    container_name: cards
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configserver:8071/
+    ports:
+      - "9000:9000"
+    networks:
+      - banking-app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  # 💰 4. Loans Service
+  loans:
+    image: yonatandas/loans:v1
+    container_name: loans
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configserver:8071/
+    ports:
+      - "8090:8090"
+    networks:
+      - banking-app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  # 🌐 5. Gateway Server (depends on all)
+  gateway:
+    image: yonatandas/gateway:v1
+    container_name: gateway
+    depends_on:
+      configserver:
+        condition: service_healthy
+      accounts:
+        condition: service_healthy
+      cards:
+        condition: service_healthy
+      loans:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configserver:8071/
+    ports:
+      - "8072:8072"
+    networks:
+      - banking-app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8072/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: always
