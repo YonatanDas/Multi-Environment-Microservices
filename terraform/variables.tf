@@ -21,3 +21,8 @@ variable "private_subnet_cidrs" {
 variable "availability_zones" {
   default = ["us-east-1a", "us-east-1b"]
 }
+
+variable "name_prefix" {
+  type        = string
+  default     = "banking"
+}

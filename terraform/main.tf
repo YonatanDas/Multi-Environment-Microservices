@@ -13,3 +13,12 @@ module "ecr" {
   environment   = var.env
 }
 
+module "iam_cluster_role" {
+  source      = "./modules/iam/cluster_role"
+  name_prefix = "banking"
+}
+
+module "iam_node_role" {
+  source      = "./modules/iam/node_role"
+  name_prefix = "banking"
+}
