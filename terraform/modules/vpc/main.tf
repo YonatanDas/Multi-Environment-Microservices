@@ -71,7 +71,8 @@ resource "aws_eip" "nat_eip" {
 # NAT Gateway (in a public subnet)
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = element(var.public_subnet_cidrs, 0) # Use the first public subnet
+  subnet_id     = aws_subnet.public[0].id
+  depends_on    = [aws_internet_gateway.igw]
   tags = {
     Name = "${var.env}-nat-gateway"
   }
@@ -96,7 +97,32 @@ resource "aws_route" "private_nat_route" {
 
 # Associate private subnets with private RT
 resource "aws_route_table_association" "private_subnets_assoc" {
-  for_each       = toset(var.private_subnet_cidrs)
-  subnet_id      = each.value
+  count      = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
+}
+
+resource "aws_security_group" "rds_sg" {
+  name        = "${var.env}-rds-sg"
+  description = "Allow DB access from EKS nodes"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow PostgreSQL from EKS nodes"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.env}-rds-sg"
+  }
 }

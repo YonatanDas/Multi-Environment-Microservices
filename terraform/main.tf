@@ -13,15 +13,6 @@ module "ecr" {
   environment   = var.environment
 }
 
-module "iam_cluster_role" {
-  source      = "./modules/iam/cluster_role"
-  name_prefix = "banking"
-}
-
-module "iam_node_role" {
-  source      = "./modules/iam/node_role"
-  name_prefix = "banking"
-}
 
 module "eks" {
   source = "./modules/eks"
@@ -38,8 +29,62 @@ module "eks" {
   # IAM
   cluster_role_arn = module.iam_cluster_role.eks_cluster_role_arn
   node_role_arn    = module.iam_node_role.eks_node_role_arn
+  oidc_provider_arn = module.eks.oidc_provider_arn
 
   # node group settings
   node_instance_type    = "t3.medium"
   node_desired_capacity = 2
 }
+
+
+module "iam_cluster_role" {
+  source      = "./modules/iam/cluster_role"
+  name_prefix = "banking"
+}
+
+module "iam_node_role" {
+  source      = "./modules/iam/node_role"
+  name_prefix = "banking"
+}
+
+# Secrets Manager for DB credentials
+module "secrets" {
+  source      = "./modules/secrets"
+  env         = var.environment
+  db_username = "dbadmin"
+  db_password = random_password.db.result
+  aws_secretsmanager_secret_arn = module.secrets.db_secret_arn
+}
+
+
+module "iam_rds_access_role" {
+  source                = "./modules/iam/rds_access_role"
+  oidc_provider_url     = module.eks.oidc_issuer_url
+  cluster_name          = module.eks.cluster_name
+  environment = var.environment
+  namespace             = "default"
+  service_account_name  = "rds-access"
+    db_secret_arn        = module.secrets.db_secret_arn
+    oidc_issuer_url =  module.eks.oidc_issuer_url
+    oidc_provider_arn = module.eks.oidc_provider_arn
+    secrets_manager_arn = module.secrets.db_secret_arn
+}
+
+# Generate a strong DB password once per environment
+resource "random_password" "db" {
+  length           = 20
+  special          = true
+  override_special = "_%-@"
+}
+
+
+# RDS Instance
+module "rds" {
+  source      = "./modules/rds"
+  env         = var.environment
+  subnet_ids  = module.vpc.private_subnets
+  db_username = "dbadmin"
+  db_password = random_password.db.result
+  db_sg_id    = module.vpc.rds_sg_id   
+}
+

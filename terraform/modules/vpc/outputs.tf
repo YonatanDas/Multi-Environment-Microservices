@@ -19,3 +19,8 @@ output "private_route_table_id" {
   description = "ID of the private route table"
   value       = aws_route_table.private.id
 }
+
+output "rds_sg_id" {
+  description = "Security Group ID for RDS"
+  value       = aws_security_group.rds_sg.id
+  }

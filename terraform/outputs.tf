@@ -21,12 +21,27 @@ output "cluster_endpoint" {
   value       = module.eks.cluster_endpoint
 }
 
-output "cluster_certificate_authority_data" {
-  description = "EKS Cluster CA certificate"
-  value       = module.eks.cluster_certificate_authority_data
+output "rds_access_role_arn" {
+  description = "IAM role ARN used by EKS pods to access RDS credentials"
+  value       = module.iam_rds_access_role.rds_access_role_arn
 }
 
 output "cluster_security_group_id" {
   description = "EKS Cluster security group ID"
   value       = module.eks.cluster_security_group_id
+}
+
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL for the EKS cluster"
+  value       = module.eks.oidc_issuer_url
+}
+
+output "oidc_provider_arn" {
+  description = "IAM OIDC provider ARN for the EKS cluster"
+  value       = module.eks.oidc_provider_arn
+}
+
+output "oidc_provider_url" {
+  description = "OIDC issuer hostname without https://"
+  value       = module.eks.oidc_provider_url
 }
