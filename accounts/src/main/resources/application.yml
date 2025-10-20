@@ -1,100 +1,75 @@
 server:
   port: 8080
+
 spring:
   application:
     name: "accounts"
+
   profiles:
     active: "prod"
+
   datasource:
-    url: jdbc:h2:mem:testdb:file:./data/accountsdb;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-  h2:
-    console:
-      enabled: true
+    url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
-  config:
-    import: "optional:configserver:http://localhost:8071/"
+    properties:
+      hibernate:
+        format_sql: true
+
   cloud:
-    kubernetes:
-      discovery:
-        all-namespaces: true
-    openfeign:
-      circuitbreaker:
+    aws:
+      region:
+        static: ${AWS_REGION:us-east-1}
+      secretsmanager:
         enabled: true
-    stream:
-      defaultBinder: none
-      bindings:
-        output:
-          destination: none
-      function:
-        definition: none         
+        default-context: /bankingapp
+        name: ${DB_SECRET_NAME:dev-db-credentials}
+
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
-  health:
-    readiness-state:
-      enabled: true
-    liveness-state:
-      enabled: true
+        include: "health,info,prometheus"  # expose only what’s safe
   endpoint:
     shutdown:
-      access: unrestricted
-    health:
-      probes:
-        enabled: true
-  info:
-    env:
+      enabled: false                       # disable remote shutdown
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
       enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
 
+logging:
+  level:
+    com.bankingapp: INFO                   # less verbose, safer for prod
 
 info:
   app:
     name: "accounts"
-    description: "Eazy Bank Accounts Application"
+    description: "Banking Accounts Microservice"
     version: "1.0.0"
 
-logging:
-  level:
-    com:
-      eazybytes:
-        accounts: DEBUG
-  pattern:
-    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
-
-resilience4j.circuitbreaker:
-  configs:
-    default:
-      slidingWindowSize: 10
-      permittedNumberOfCallsInHalfOpenState: 2
-      failureRateThreshold: 50
-      waitDurationInOpenState: 10000
-
-resilience4j.retry:
-  configs:
-    default:
-      maxAttempts: 3
-      waitDuration: 500
-      enableExponentialBackoff: true
-      exponentialBackoffMultiplier: 2
-      ignoreExceptions:
-        - java.lang.NullPointerException
-      retryExceptions:
-        - java.util.concurrent.TimeoutException
-
-resilience4j.ratelimiter:
-  configs:
-    default:
-      timeoutDuration: 1000
-      limitRefreshPeriod: 5000
-      limitForPeriod: 1
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 500
+  ratelimiter:
+    configs:
+      default:
+        limitForPeriod: 1
+        limitRefreshPeriod: 5000

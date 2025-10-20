@@ -1,73 +1,75 @@
 server:
   port: 8090
+
 spring:
   application:
     name: "loans"
+
   profiles:
     active: "prod"
+
   datasource:
-    url: jdbc:h2:mem:testdb
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-  h2:
-    console:
-      enabled: true
+    url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
-  config:
-    import: "optional:configserver:http://localhost:8071/"
+    properties:
+      hibernate:
+        format_sql: true
+
   cloud:
-    kubernetes:
-      discovery:
-        all-namespaces: true
+    aws:
+      region:
+        static: ${AWS_REGION:us-east-1}
+      secretsmanager:
+        enabled: true
+        default-context: /bankingapp
+        name: ${DB_SECRET_NAME:dev-db-credentials}
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
-  health:
-    readiness-state:
-      enabled: true
-    liveness-state:
-      enabled: true
+        include: "health,info,prometheus"  # expose only what’s safe
   endpoint:
     shutdown:
-      access: unrestricted
-    health:
-      probes:
-        enabled: true
-  info:
-    env:
+      enabled: false                       # disable remote shutdown
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
       enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
 
-
-eureka:
-  instance:
-    preferIpAddress: true
-  client:
-    fetchRegistry: true
-    registerWithEureka: true
-    serviceUrl:
-      defaultZone: http://localhost:8070/eureka/
+logging:
+  level:
+    com.bankingapp: INFO                   # less verbose, safer for prod
 
 info:
   app:
     name: "loans"
-    description: "Eazy Bank Loans Application"
+    description: "Banking Loans Microservice"
     version: "1.0.0"
 
-logging:
-  level:
-    com:
-      eazybytes:
-        loans: DEBUG
-  pattern:
-    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 500
+  ratelimiter:
+    configs:
+      default:
+        limitForPeriod: 1
+        limitRefreshPeriod: 5000

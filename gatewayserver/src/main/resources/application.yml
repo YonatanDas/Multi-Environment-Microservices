@@ -1,55 +1,66 @@
+server:
+  port: 8072
+
 spring:
   application:
-    name: "gatewayserver"
-  config:
-    import: "optional:configserver:http://localhost:8071/"
+    name: gatewayserver
+
   cloud:
     gateway:
-      httpclient:
-        connect-timeout: 1000
-        response-timeout: 10s
-    kubernetes:
       discovery:
-        enabled: true
-        all-namespaces: true
-    discovery:
-      client:
-        health-indicator:
-          enabled: false
+        locator:
+          enabled: true              # enables route mapping using service names
+          lower-case-service-id: true
+      routes:
+        # ---- Accounts Service ----
+        - id: accounts
+          uri: http://accounts:8080  # internal K8s service DNS name
+          predicates:
+            - Path=/api/accounts/**
+
+        # ---- Cards Service ----
+        - id: cards
+          uri: http://cards:9000
+          predicates:
+            - Path=/api/cards/**
+
+        # ---- Loans Service ----
+        - id: loans
+          uri: http://loans:8090
+          predicates:
+            - Path=/api/loans/**
+
+      # Optional global CORS for Postman access
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "health,info,prometheus"  # expose only what’s safe
   endpoint:
-    gateway:
-      access: unrestricted
-  info:
-    env:
+    shutdown:
+      enabled: false                       # disable remote shutdown
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
       enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
 
-info:
-  app:
-    name: "gatewayserver"
-    description: "Banking App Gateway Server Application"
-    version: "1.0.0"
-
 logging:
   level:
-    com:
-      eazybytes:
-        gatewayserver: DEBUG
-  pattern:
-    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
-
-resilience4j.circuitbreaker:
-  configs:
-    default:
-      slidingWindowSize: 10
-      permittedNumberOfCallsInHalfOpenState: 2
-      failureRateThreshold: 50
-      waitDurationInOpenState: 10000
-
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web: INFO
