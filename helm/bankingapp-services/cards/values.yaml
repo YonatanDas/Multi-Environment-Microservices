@@ -1,0 +1,73 @@
+# Default values for bankingapp-services/cards.
+
+deploymentName: cards-deployment
+serviceName: cards
+appLabel: cards
+appName: cards
+
+serviceAccount:
+  name: cards-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<ACCOUNT_ID>:role/dev-rds-access-role
+
+
+replicaCount: 1
+
+global:
+  configMapName: bankingapp-config
+  springProfile: default
+  db:                                     # ADD: move DB fields under global.db
+    host: your-db-host
+    user: your-db-user
+    password: your-db-password
+    name: your-db-name
+  aws:
+    region: us-east-1
+
+image:
+  repository: 063630846340.dkr.ecr.us-east-1.amazonaws.com/bankingapp-cards
+  tag: v1.0.0
+
+containerPort: 9000
+servicePort: 9000
+
+service:
+  type: ClusterIP
+  Port: 9000
+  targetPort: 9000
+
+otel_enabled: true
+config_enabled: true
+discovery_enabled: true
+
+dbSecretName: dev-db-credentials
+
+db:
+  secretName: dev-db-credentials
+  useAwsSecretsManager: true
+  hostKey: DB_HOST
+  userKey: DB_USER
+  passwordKey: DB_PASSWORD
+
+probes:
+  liveness:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readiness:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
