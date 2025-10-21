@@ -19,3 +19,11 @@ Thumbs.db
 
 # Docker
 *.env
+
+#terraform
+.terraform/
+*.terraform.lock.hcl
+
+#helm
+charts/
+Chart.lock
