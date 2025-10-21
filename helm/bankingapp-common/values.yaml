@@ -1,0 +1,44 @@
+## Default values for bankingapp-common.
+
+global:
+  configMapName: bankingapp-config
+  springProfile: default
+  javaToolOptions: ""
+  otelExporterEndpoint: ""
+  otelMetricsExporter: "none"
+  otelLogsExporter: "none"
+  aws:
+    region: us-east-1
+  env: dev
+  ecrRepoPrefix: 063630846340.dkr.ecr.us-east-1.amazonaws.com
+  
+  dbSecretName: dev-db-credentials
+  db:
+    host: bankingdb.cluster-xxxx.us-east-1.rds.amazonaws.com
+    user: dbadmin
+    password: yourpassword
+    name: bankingdb
+
+replicaCount: 2
+containerPort: 8080
+serviceAccount:
+  name: ""
+  create: true
+  annotations: {}
+  irsa:
+    enabled: false
+    roleArn: ""
+
+image:
+  repository: ""
+  tag: "latest"
+
+probes:
+  liveness:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readiness:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 10
+    periodSeconds: 5

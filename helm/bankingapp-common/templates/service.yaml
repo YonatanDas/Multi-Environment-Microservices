@@ -1,0 +1,3 @@
+{{- define "common.service" -}}
+{{- /* This template has been moved to _service.tpl. Do not use. */ -}}
+{{- end -}}

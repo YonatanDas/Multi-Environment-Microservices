@@ -1,0 +1,11 @@
+{{- define "common.serviceaccount" -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+  {{- if .Values.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml .Values.serviceAccount.annotations | nindent 4 }}
+  {{- end }}
+{{- end -}}

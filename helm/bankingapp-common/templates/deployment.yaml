@@ -1,0 +1,3 @@
+{{- define "common.deployment" -}}
+{{/* Neutralized deployment template, moved to _deployment.tpl */}}
+{{- end -}}

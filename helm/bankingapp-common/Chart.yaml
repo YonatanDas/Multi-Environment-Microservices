@@ -1,0 +1,6 @@
+apiVersion: v2
+Name: bankingapp-common
+Version: 0.1.0
+description: Shared templates and values for the Banking microservices
+type: library
+AppVersion: "1.0.0"
