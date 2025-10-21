@@ -1,0 +1,21 @@
+dependencies:
+- name: bankingapp-common
+  repository: file://../../bankingapp-common
+  version: 0.1.0
+- name: configserver
+  repository: file://../../bankingapp-services/configserver
+  version: 0.1.0
+- name: accounts
+  repository: file://../../bankingapp-services/accounts
+  version: 0.1.0
+- name: cards
+  repository: file://../../bankingapp-services/cards
+  version: 0.1.0
+- name: loans
+  repository: file://../../bankingapp-services/loans
+  version: 0.1.0
+- name: gatewayserver
+  repository: file://../../bankingapp-services/gatewayserver
+  version: 0.1.0
+digest: sha256:f08b936d1a1bf96c3feb937ad3f1d5af33f5539d0fac2b6003e25c68726dbfd8
+generated: "2025-10-17T16:00:12.0222525+03:00"

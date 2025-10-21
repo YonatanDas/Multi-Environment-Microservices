@@ -1,0 +1,36 @@
+global:
+  environment: Staging
+  aws: 
+    region: us-east-1 #can be changed based on requirement
+  dbSecretName: stag-db-credentials 
+  imagetag: stag
+  db:
+    host: stag-db.cluster-xxxx.us-east-1.rds.amazonaws.com #Stag
+    user: admin
+    password: #stagpassword
+    name: bankingapp-stag
+
+accounts:
+  image:
+    tag: v1.0.0-Staging
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+cards:
+  image:
+    tag: v1.0.0-Staging
+  replicaCount: 1 
+
+loans:
+  image:
+    tag: v1.0.0-Staging
+  replicaCount: 1
+
+gatewayserver:
+  image:
+    tag: v1.0.0-Staging
+  service:
+    type: LoadBalancer
