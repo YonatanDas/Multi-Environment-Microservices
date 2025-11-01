@@ -55,3 +55,13 @@ output "eso_role_arn" {
   description = "IAM Role ARN for External Secrets Operator"
   value       = module.external_secrets_role.eso_role_arn
 }
+
+output "github_oidc_provider_arn" {
+  description = "IAM OIDC provider ARN for GitHub Actions"
+  value       = module.github_oidc.github_oidc_provider_arn
+}
+
+output "github_actions_role_arn" {
+  description = "IAM Role ARN for GitHub Actions"
+  value       = module.github_oidc.github_actions_role_arn
+}

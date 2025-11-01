@@ -136,3 +136,10 @@ module "external_secrets_role" {
     module.secrets.secret_arn
   ]
 }
+
+  # GitHub OIDC Module
+############################################
+
+module "github_oidc" {
+  source = "../../modules/iam/github_oidc"
+}
