@@ -139,7 +139,25 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
-
+            <!-- Linting -->
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>3.3.0</version>
+            <executions>
+                <execution>
+                <phase>validate</phase>
+                <goals>
+                    <goal>check</goal>
+                </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <consoleOutput>true</consoleOutput>
+                <failOnViolation>true</failOnViolation>
+                <configLocation>google_checks.xml</configLocation>
+            </configuration>
+            </plugin>
             <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
