@@ -20,3 +20,13 @@ module "iam_rds_access_role" {
   namespace            = "default"
   service_account_name = "rds-access"
 }
+
+module "external_secrets_role" {
+  source               = "../../modules/iam/external_secrets_role"
+  env                  = var.environment
+  oidc_provider_arn    = module.eks.oidc_provider_arn
+  oidc_provider_url    = module.eks.oidc_provider_url
+  secretsmanager_arns  = [
+    "arn:aws:secretsmanager:${var.aws_region}:${var.aws_account_id}:secret:dev-db-credentials-*"
+  ]
+}

@@ -6,8 +6,16 @@ output "public_subnets" {
   value = aws_subnet.public[*].id
 }
 
+output "public_subnets_names" {
+  value = aws_subnet.public
+}
+
 output "private_subnets" {
   value = aws_subnet.private[*].id
+}
+
+output "private_subnets_names" {
+  value = aws_subnet.private
 }
 
 output "nat_gateway_id" {

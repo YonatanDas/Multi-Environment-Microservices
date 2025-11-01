@@ -1,4 +1,6 @@
+##########################################
 # VPC
+##########################################
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -8,7 +10,9 @@ resource "aws_vpc" "main" {
   }
 }
 
+##########################################
 # Internet Gateway
+##########################################
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -16,7 +20,9 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
+##########################################
 # Public Subnets
+##########################################
 resource "aws_subnet" "public" {
   count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.main.id
@@ -28,7 +34,9 @@ resource "aws_subnet" "public" {
   }
 }
 
+##########################################
 # Private Subnets
+##########################################
 resource "aws_subnet" "private" {
   count             = length(var.private_subnet_cidrs)
   vpc_id            = aws_vpc.main.id
@@ -39,7 +47,9 @@ resource "aws_subnet" "private" {
   }
 }
 
-# Public Route Table
+##########################################
+# Public Route Table + Associations
+##########################################
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   route {
@@ -59,7 +69,9 @@ resource "aws_route_table_association" "public_assoc" {
 }
 
 
-# Elastic IP for NAT Gateway
+##########################################
+# NAT Gateway and Private Route Table
+##########################################
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
   tags = {
@@ -102,6 +114,9 @@ resource "aws_route_table_association" "private_subnets_assoc" {
   route_table_id = aws_route_table.private.id
 }
 
+##########################################
+# RDS Security Group
+##########################################
 resource "aws_security_group" "rds_sg" {
   name        = "${var.environment}-rds-sg"
   description = "Allow DB access from EKS nodes"
@@ -112,7 +127,7 @@ resource "aws_security_group" "rds_sg" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = var.private_subnet_cidrs
+    security_groups = [var.eks_node_sg_id] # Allow access from EKS worker nodes to RDS (SG --> SG)
   }
 
   egress {

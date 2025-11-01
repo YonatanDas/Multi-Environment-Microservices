@@ -59,3 +59,29 @@ variable "node_max_size" {
   default     = 3
 }
 variable "db_instance_class" {}
+
+variable "aws_account_id" {
+  description = "The AWS Account ID where resources will be created"
+  type        = string  
+}
+
+variable "db_username" {
+  description = "Username for the database"
+  type        = string
+  default     = "dbadmin"
+}
+variable "db_name" {
+  description = "Name of the initial database to create"
+  type        = string
+  default     = "dev_bank"
+}
+
+variable "backup_retention_period" {
+  description = "Number of days to retain backups"
+  type        = number
+}
+
+variable "deletion_protection" {
+  description = "Enable deletion protection for the RDS instance"
+  type        = bool
+}

@@ -8,9 +8,18 @@ variable "cluster_name" {
   type        = string
 }
 
-
 variable "name_prefix" {
   type        = string
   default     = "banking"
 }
 
+variable "aws_account_id" {
+  description = "The AWS Account ID where resources will be created"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "The AWS region where resources will be created"
+  type        = string
+  default     = "us-east-1"
+}

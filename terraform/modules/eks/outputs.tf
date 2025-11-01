@@ -1,5 +1,5 @@
 ##########################################
-# Cluster Outputs
+# EKS Cluster Outputs
 ##########################################
 
 output "cluster_name" {
@@ -35,4 +35,9 @@ output "oidc_provider_arn" {
 output "oidc_provider_url" {
   description = "OIDC issuer hostname without https://"
   value       = replace(aws_iam_openid_connect_provider.eks.url, "https://", "")
+}
+
+output "node_sg_id" {
+  description = "Security Group ID of worker nodes"
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
 }

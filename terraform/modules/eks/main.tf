@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   # Control Plane Logging
-  enabled_cluster_log_types = ["api", "audit", "authenticator"]
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = {
     Name        = var.cluster_name
@@ -44,28 +44,49 @@ resource "aws_eks_node_group" "default" {
     Environment = var.environment
   }
 
-  depends_on = [aws_eks_cluster.this]
+  depends_on = [
+    aws_eks_cluster.this
+    ]
 }
 
 ##########################################
 # Create OIDC provider for IRSA
 ##########################################
+data "tls_certificate" "eks" {
+  url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
 
 resource "aws_iam_openid_connect_provider" "eks" {
   client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da0afd50b3b"] # standard for EKS OIDC
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint] # standard for EKS OIDC
   url             = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+
+  depends_on = [
+    aws_eks_cluster.this
+    ]
 }
 
 ##########################################
-# Data Source: Cluster Authentication
+# Helm Release: External Secrets Operator
 ##########################################
+resource "helm_release" "external_secrets" {
+  name       = "external-secrets"
+  repository = "https://charts.external-secrets.io"
+  chart      = "external-secrets"
+  namespace  = "external-secrets"
 
-data "aws_eks_cluster" "this" {
-  name = aws_eks_cluster.this.name
+  create_namespace = true
+  version          = "0.9.11"
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_iam_openid_connect_provider.eks,
+  ]
+
+  set = [
+    {
+      name  = "installCRDs"
+      value = "true"
+    }
+  ]
 }
-
-data "aws_eks_cluster_auth" "this" {
-  name = aws_eks_cluster.this.name
-}
-
