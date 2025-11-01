@@ -1,64 +1,45 @@
-# Default values for bankingapp-services/accounts.
+# bankingapp-services/accounts/values.yaml
 
 deploymentName: accounts-deployment
 serviceName: accounts
 appLabel: accounts
 appName: accounts
 
-serviceAccount:
-  name: accounts-sa
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<ACCOUNT_ID>:role/dev-rds-access-role
-
+# Service defaults — can be overridden in environments
 replicaCount: 2
 
-global:
-  configMapName: bankingapp-config
-  springProfile: default
-  db:                                     # ADD: move DB fields under global.db
-    host: your-db-host
-    user: your-db-user
-    password: your-db-password
-    name: your-db-name
-  aws:
-    region: us-east-1
-
 image:
-  repository: 063630846340.dkr.ecr.us-east-1.amazonaws.com/bankingapp-accounts
-  tag: v1.0.0
+  repository: 063630846340.dkr.ecr.us-east-1.amazonaws.com/accounts
+  tag: "latest"               # overridden by env
+  pullPolicy: IfNotPresent
 
-containerPort: 8080
 servicePort: 8080
+containerPort: 8080
 
 service:
   type: ClusterIP
-  Port: 8080
+  port: 8080
   targetPort: 8080
 
-otel_enabled: true
-config_enabled: true
-discovery_enabled: true
+# Secrets are created via ESO — service only references name
+secretName: dev-db-credentials
 
-dbSecretName: dev-db-credentials
-
+# DB config — these vars are not used anymore since ESO handles everything
 db:
-  secretName: dev-db-credentials
-  useAwsSecretsManager: true
-  hostKey: DB_HOST
-  userKey: DB_USER
-  passwordKey: DB_PASSWORD
+  useAwsSecretsManager: false  # legacy toggle
+  version: "1.0.0"
 
 probes:
   liveness:
     path: /actuator/health/liveness
     initialDelaySeconds: 30
-    periodSeconds: 10
+    periodSeconds: 40
     timeoutSeconds: 3
     failureThreshold: 3
 
   readiness:
     path: /actuator/health/readiness
-    initialDelaySeconds: 10
+    initialDelaySeconds: 60
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3

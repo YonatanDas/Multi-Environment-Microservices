@@ -1,0 +1,9 @@
+{{ include "common.serviceaccount" . }}
+
+---
+
+{{ include "common.service" . }}
+
+---
+
+{{ include "common.deployment" . }}
