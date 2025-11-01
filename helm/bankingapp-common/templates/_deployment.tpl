@@ -25,14 +25,32 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {{ .Values.containerPort }}
-          env:
-            # Core Spring Configs
-            - name: SPRING_PROFILES_ACTIVE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Values.global.configMapName }}
-                  key: SPRING_PROFILES_ACTIVE
 
+          # ---------- ENV VARS ----------
+          env:
+
+            - name: AWS_REGION
+              value: {{ .Values.global.aws.region }}
+
+            - name: build.version
+              value: {{ .Values.image.tag | default "1.0.0" }}
+
+          {{- if and .Values.secretName }}
+            - name: DB_SECRET_NAME
+              value: {{ .Values.secretName }}
+          {{- end }}
+
+          # ---------- CONFIG + SECRETS ----------
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.configMapName | default "bankingapp-config" }}
+
+          {{- if and .Values.secretName (ne .Values.secretName "") }}
+            - secretRef:
+                name: {{ .Values.secretName }}
+          {{- end }}
+
+          # ---------- HEALTH CHECKS ----------
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.liveness.path }}
@@ -52,17 +70,7 @@ spec:
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
 
           {{- if .Values.resources }}
-          
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}        
-    
-          {{- if .Values.dbSecretName }}
-
-          # --- Database and AWS Secrets ---
-
-          envFrom:
-            - secretRef:
-                name: {{ .Values.dbSecretName }}
-          {{- end }}
+            {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
 {{- end -}}
