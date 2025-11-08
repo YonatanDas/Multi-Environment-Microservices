@@ -88,6 +88,9 @@ jobs:
       - name: Update Docker Cache
         run: ./.github/workflows/reusable/docker-cache-cleanup.sh
 
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.0  
+
       - name: Trivy Image Scan
         run: ./.github/workflows/reusable/trivy-image-scan.sh gateway ${{ env.REGISTRY }} ${{ env.AWS_REGION }}
 
