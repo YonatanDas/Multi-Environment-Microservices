@@ -99,7 +99,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.SERVICE }}:${{ steps.vars.outputs.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
           cache-from: type=local, src=/tmp/.buildx-cache
-          cache-to: type=local, dest=/tmp/.buildx-cache-new,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Update Cache
         run: |
