@@ -129,7 +129,7 @@ jobs:
           role-to-assume: arn:aws:iam::063630846340:role/oidc-github
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
-          
+
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v1
@@ -142,4 +142,4 @@ jobs:
           trivy image \
             --exit-code 0 \
             --severity HIGH,CRITICAL \
-            ${{ env.REGISTRY }}/${{ env.SERVICE }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
