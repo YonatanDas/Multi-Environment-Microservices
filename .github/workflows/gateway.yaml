@@ -125,6 +125,9 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: print ecr credentials
+        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 063630846340.dkr.ecr.us-east-1.amazonaws.com
+
       - name: Image Scan
         run: |
           trivy image \
