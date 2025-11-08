@@ -74,7 +74,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::063630846340:role/oidc-github
           aws-region: ${{ env.AWS_REGION }}
-          audiance: sts.amazonaws.com
+          audience: sts.amazonaws.com
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v1
