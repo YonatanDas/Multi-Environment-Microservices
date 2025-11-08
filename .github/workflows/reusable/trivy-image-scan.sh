@@ -7,8 +7,6 @@ AWS_REGION=$3
 
 echo "🧪 Running Trivy image scan for ${SERVICE}..."
 
-# Login again (in case cache cleared)
-aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
 trivy image \
   --exit-code 0 \
