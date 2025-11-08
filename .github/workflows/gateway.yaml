@@ -16,7 +16,7 @@ permissions:
 env:
   SERVICE: gateway
   AWS_REGION: us-east-1
-  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/gateway
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
 jobs:
 
@@ -98,8 +98,8 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.SERVICE }}:${{ steps.vars.outputs.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-from: src=/tmp/.buildx-cache
+          cache-to: dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Update Cache
         run: |
