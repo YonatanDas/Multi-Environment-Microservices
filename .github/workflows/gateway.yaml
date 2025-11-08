@@ -38,23 +38,8 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Run Checkstyle (Lint)
-        working-directory: ./gatewayserver
-        run: mvn -B checkstyle:check
-
-      - name: Run Unit Tests
-        working-directory: ./gatewayserver
-        run: mvn -B test
-
-      - name: Generate Code Coverage Report
-        working-directory: ./gatewayserver
-        run: mvn jacoco:report
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: gatewayserver/target/site/jacoco/
+      - name: lint + test + coverage
+        run: ./github/reusable/test-java.sh gatewayserver
 
       - name: Install Trivy
         uses: aquasecurity/setup-trivy@v0.2.0
