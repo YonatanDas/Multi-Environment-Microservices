@@ -98,6 +98,9 @@ jobs:
       - name: Update Docker Cache
         run: ./.github/workflows/reusable/docker-cache-cleanup.sh
 
+  # -------------------------------
+  # SECURE IMAGE & SIGNING
+  # -------------------------------
       - name: Install Trivy
         uses: aquasecurity/setup-trivy@v0.2.0  
 
