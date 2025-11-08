@@ -16,7 +16,7 @@ permissions:
 env:
   SERVICE: gateway
   AWS_REGION: us-east-1
-  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/gateway
 
 jobs:
 
@@ -52,7 +52,7 @@ jobs:
         uses: aquasecurity/setup-trivy@v0.2.0
 
       - name: Trivy Scan + report
-        run: ./.github/workflows/reusable/trivy-scan.sh gatewayserver
+        run: ./.github/workflows/reusable/trivy-fs-scan.sh gatewayserver
 
 
 
