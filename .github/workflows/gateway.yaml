@@ -23,7 +23,7 @@ jobs:
   # -------------------------------
   # LINT & UNIT TESTS
   # -------------------------------
-  Lint-Unit Test:
+  Lint-And-Test:
     runs-on: ubuntu-latest
 
     steps:
@@ -61,7 +61,7 @@ jobs:
   # -------------------------------
   Build-and-push:
     runs-on: ubuntu-latest
-    needs: Lint-test
+    needs: Lint-And-Test
 
     steps:
       - uses: actions/checkout@v3
