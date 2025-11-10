@@ -1,9 +1,14 @@
-#!/bin/bash
-set -e
-AWS_REGION=$1
-REGISTRY=$2
+    - uses: actions/checkout@v3
 
-echo "Logging in to AWS ECR..." 
-aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+    - name: Make scripts executable
+      run: chmod +x .github/workflows/reusable/*.sh
 
-echo "✅ AWS OIDC setup complete."
+    - name: Configure AWS OIDC Access
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/oidc-github
+        aws-region: ${{ env.AWS_REGION }}
+        audience: sts.amazonaws.com
+
+    - name: AWS ECR Login
+      run: ./.github/workflows/reusable/aws-oidc-login.sh ${{ env.AWS_REGION }} ${{ env.REGISTRY }}
