@@ -11,7 +11,7 @@ cd "$SERVICE_DIR"
 mvn -B checkstyle:check
 
 # Run Unit Tests
-mvn -B test
+mvn -T 1C test -DskipITs
 
 # Generate Code Coverage Report
 mvn jacoco:report

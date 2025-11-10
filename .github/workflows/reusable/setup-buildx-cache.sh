@@ -7,6 +7,6 @@ echo "🔧 Setting up Docker Buildx and cache..."
 docker buildx create --use || true
 
 # Create local cache directory
-mkdir -p /tmp/.buildx-cache
+mkdir -p /gha/.buildx-cache
 
 echo "✅ Buildx and cache initialized successfully."
