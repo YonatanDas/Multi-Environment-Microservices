@@ -101,11 +101,11 @@ jobs:
         run: ./.github/scripts/setup-buildx-cache.sh
 
       - name: Setup AWS + ECR
-          uses: ./.github/actions/env-setup
-          with:
-            aws_role: arn:aws:iam::063630846340:role/oidc-github
-            aws_region: ${{ env.AWS_REGION }}
-            registry: ${{ env.REGISTRY }}
+        uses: ./.github/actions/env-setup
+        with:
+          aws_role: arn:aws:iam::063630846340:role/oidc-github
+          aws_region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
 
       - name: Build & Push Docker Image
         run: ./.github/scripts/build-push-image.sh gateway ./gatewayserver ${{ env.REGISTRY }} ${{ env.AWS_REGION }}
