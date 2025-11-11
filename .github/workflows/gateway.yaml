@@ -55,17 +55,17 @@ jobs:
       - name: lint + test + coverage
         run: ./.github/workflows/reusable/test-java.sh gatewayserver
 
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@v0.2.0
-
-      - name: Trivy Scan + report
-        run: ./.github/workflows/reusable/trivy-fs-scan.sh gatewayserver
-
       - name: Trivy Cache
         uses: actions/cache@v3
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ runner.os }}
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.0
+
+      - name: Trivy Scan + report
+        run: ./.github/workflows/reusable/trivy-fs-scan.sh gatewayserver
 
 
 
