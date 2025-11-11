@@ -156,4 +156,7 @@ jobs:
         COSIGN_EXPERIMENTAL: "true"
       run: |
         cosign sign ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
-        cosign verify ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
+        cosign verify \
+          --certificate-identity "https://github.com/YonatanDas/Multi-Environment-Microservices/.github/workflows/gateway.yaml@refs/heads/test-workflows" \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
