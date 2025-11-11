@@ -127,13 +127,12 @@ jobs:
         aws_region: ${{ env.AWS_REGION }}
         registry: ${{ env.REGISTRY }}
 
-    - name: Cache Trivy db
+    - name: Trivy Cache
       uses: actions/cache@v3
       with:
-        path: /.cache/trivy
+        path: ~/.cache/trivy
         key: trivy-db-${{ runner.os }}
-        restore-keys: |
-          trivy-db-  
+
 
     - name: Install Trivy
       uses: aquasecurity/setup-trivy@v0.2.0    
