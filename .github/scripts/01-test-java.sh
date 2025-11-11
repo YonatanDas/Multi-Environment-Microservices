@@ -3,7 +3,7 @@ set -e  # Exit immediately on error
 
 SERVICE_DIR=$1
 
-echo "🔍 Running lint and unit tests in $SERVICE_DIR..."
+echo "[$(date +'%H:%M:%S')] ⏳ 🔍 Running lint and unit tests in $SERVICE_DIR..."
 
 cd "$SERVICE_DIR"
 
@@ -16,4 +16,4 @@ mvn -T 1C test -DskipITs
 # Generate Code Coverage Report
 mvn jacoco:report
 
-echo "✅ Lint, tests, and coverage completed for $SERVICE_DIR"
+echo "[$(date +'%H:%M:%S')] ⏳ ✅ Lint, tests, and coverage completed for $SERVICE_DIR"

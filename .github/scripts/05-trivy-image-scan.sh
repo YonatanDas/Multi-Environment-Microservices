@@ -11,6 +11,7 @@ echo "🧪 Running Trivy image scan for ${SERVICE}..."
 trivy image \
   --exit-code 0 \
   --ignore-unfixed \
+  --quiet \
   --format table \
   --output "${SERVICE}-trivy-image-report.txt" \
   --severity HIGH,CRITICAL \

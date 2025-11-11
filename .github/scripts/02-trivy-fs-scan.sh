@@ -12,7 +12,7 @@ trivy fs \
   --no-progress \
   --severity HIGH,CRITICAL \
   --format table \
-  -o "trivy-reports/$REPORT_NAME" \
+  --output "${SERVICE}-trivy-FS-report.txt" \
   "$SERVICE_DIR"
 
 echo "✅ Scan complete: trivy-reports/$REPORT_NAME"
