@@ -17,11 +17,6 @@ cd "$ROOT_DIR/$SERVICE_DIR" || { echo "❌ Directory not found: $ROOT_DIR/$SERVI
 # or comment out if you want full enforcement
 mvn -B clean verify -Dcheckstyle.skip=true || true
 
-# --------------------------
-# Create artifact report folder (optional)
-# --------------------------
-mkdir -p "$ROOT_DIR/.ci_artifacts/test-reports/$SERVICE_DIR"
-cp -r target/surefire-reports "$ROOT_DIR/.ci_artifacts/test-reports/$SERVICE_DIR/" || true
-cp -r target/site/jacoco "$ROOT_DIR/.ci_artifacts/test-reports/$SERVICE_DIR/" || true
+
 
 echo "✅ Tests finished for $SERVICE_DIR"
