@@ -39,7 +39,9 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Check Terraform formatting
-        run: terraform fmt -check -recursive terraform/
+        run: |
+          terraform init terraform/ 
+          terraform fmt -check -recursive terraform/
 
   terraform-validate:
     name: Validate (${{ matrix.env }})
