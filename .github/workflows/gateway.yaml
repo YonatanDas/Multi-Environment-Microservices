@@ -42,16 +42,7 @@ jobs:
             cards: 'cards/**'
             loans: 'loans/**'
             gatewayserver: 'gatewayserver/**'
-
-  determine-matrix:
-    steps:
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          service: ${{ fromJson(needs.services-changed.outputs.services) }}
-
-          
-
+        
   # -------------------------------
   # LINT & UNIT TESTS
   # -------------------------------
