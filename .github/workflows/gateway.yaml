@@ -1,4 +1,4 @@
-name: CI - Gateway Service
+name: CI for Microservices 
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -6,11 +6,17 @@ concurrency:
 
 on:
   push:
-    branches: ["test-workflows"]
+    branches: [ "test-workflows" ]
     paths:
+      - "accounts/**"
+      - "cards/**"
+      - "loans/**"
       - "gatewayserver/**"
   pull_request:
     paths:
+      - "accounts/**"
+      - "cards/**"
+      - "loans/**"
       - "gatewayserver/**"
 
 permissions:
@@ -18,29 +24,53 @@ permissions:
   id-token: write
 
 env:
-  SERVICE: gateway
-  SERVICE_DIR: ./gatewayserver
   AWS_REGION: us-east-1
   REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
 jobs:
+  
+  services-changed:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.matrix }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: detect
+        with:
+          filters: |
+            accounts: 'accounts/**'
+            cards: 'cards/**'
+            loans: 'loans/**'
+            gatewayserver: 'gatewayserver/**'
+
+  determine-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.services-changed.outputs.services) }}
+
+        
 
   # -------------------------------
   # LINT & UNIT TESTS
   # -------------------------------
   Lint-And-Test:
     runs-on: ubuntu-latest
+    needs: determine-matrix 
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.services-changed.outputs.services) }}
+    env:
+          SERVICE: ${{ matrix.SERVICE }}
+          SERVICE_DIR: ./${{ matrix.SERVICE }}    
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
+  
+      - name: Restore Docker cache
+        uses: ./.github/actions/docker-cache
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          cache-key: ${{ runner.os }}-buildx-${{ github.sha }}
 
       - name: Install JDK 21
         uses: actions/setup-java@v3
@@ -53,15 +83,15 @@ jobs:
         run: chmod +x .github/scripts/*.sh
 
       - name: lint + test + coverage
-        run: ./.github/scripts/01-test-java.sh gatewayserver
+        run: ./.github/scripts/01-test-java.sh ${{ env.SERVICE_DIR }}
 
       - name: Upload Test & Coverage Reports
         uses: actions/upload-artifact@v4
         with:
           name: test-and-coverage
           path: |
-            gatewayserver/target/site/jacoco
-            gatewayserver/target/surefire-reports
+            ${{ env.SERVICE_DIR }}/target/site/jacoco
+            ${{ env.SERVICE_DIR }}/target/surefire-reports
 
 
   # -------------------------------
@@ -86,13 +116,13 @@ jobs:
         uses: aquasecurity/setup-trivy@v0.2.0
 
       - name: Trivy Scan + report
-        run: ./.github/scripts/02-trivy-fs-scan.sh gatewayserver
+        run: ./.github/scripts/02-trivy-fs-scan.sh ${{ env.SERVICE_DIR }}
 
       - name: Upload Trivy FS Report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-fs-report
-          path: gateway-trivy-FS-report.txt
+          path: ${{ env.SERVICE }}-trivy-FS-report.txt
 
 
 
@@ -102,7 +132,6 @@ jobs:
   Build-And-Push:
     runs-on: ubuntu-latest
     needs: [Lint-And-Test, Trivy-FS-Scan]
-
     steps:
       - uses: actions/checkout@v3
       - name: Setup AWS + ECR
@@ -112,13 +141,10 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
           registry: ${{ env.REGISTRY }}
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
+      - name: Restore Docker cache
+        uses: ./.github/actions/docker-cache
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          cache-key: ${{ runner.os }}-buildx-${{ github.sha }}
 
       - name: Setup Buildx & Cache
         run: ./.github/scripts/03-setup-buildx-cache.sh
@@ -130,23 +156,28 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
           registry: ${{ env.REGISTRY }}
 
-      - name: Build & Push Docker Image
-        run: ./.github/scripts/04-build-push-image.sh gateway ./gatewayserver ${{ env.REGISTRY }} ${{ env.AWS_REGION }}
+      - name: Build Image
+        run: |
+          ./.github/scripts/04a-build-image.sh \
+            "${{ env.SERVICE }}" \
+            "${{ env.SERVICE_DIR }}" \
+            "${{ env.REGISTRY }}" \
+            "${{ env.AWS_REGION }}"
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+      - name: Scan JAR before Push
+        run: ./.github/scripts/04b-scan-jar-before-push.sh "${{ env.SERVICE }}"
+
+      - name: Push Image to ECR
+        run: ./.github/scripts/04c-push-image.sh \
+            "${{ env.SERVICE }}" \
+            "${{ env.REGISTRY }}" \
+            "${{ env.AWS_REGION }}"
 
       - name: Update Docker Cache
         run: ./.github/scripts/docker-cache-cleanup.sh
 
       - name: Save Build Metadata
         run: echo "Image built at $(date)" > build-info.txt
-
       - name: Upload Build Info
         uses: actions/upload-artifact@v4
         with:
@@ -155,7 +186,7 @@ jobs:
 
   # -------------------------------
   # SECURE IMAGE & SIGNING
-  # -------------------------------
+  # ------------------------------- 
   Scan-And-SBOM:
     runs-on: ubuntu-latest
     needs: [Lint-And-Test, Build-And-Push]
@@ -167,31 +198,18 @@ jobs:
         aws_role: arn:aws:iam::063630846340:role/oidc-github
         aws_region: ${{ env.AWS_REGION }}
         registry: ${{ env.REGISTRY }}
-    - name: Trivy Cache
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/trivy
-        key: trivy-db-${{ runner.os }}
-    - name: Install Trivy
-      uses: aquasecurity/setup-trivy@v0.2.0    
-    - name: Trivy Image Scan
-      run: ./.github/scripts/05-trivy-image-scan.sh ${{ env.SERVICE }} ${{ env.REGISTRY }} ${{ env.AWS_REGION }}
-    - name: Upload Trivy Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: gateway-trivy-report
-        path: gateway-trivy-image-report.txt
-    - name: Generate SBOM (CycloneDX)
-      run: |
-        trivy image --format cyclonedx \
-          --output gateway-sbom.xml \
-          ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
+    - name: Trivy Image Scan & SBOM
+      run: ./.github/scripts/05-trivy-image-scan.sh \
+            "${{ env.SERVICE }}" \
+            "${{ env.REGISTRY }}" \
+            "${{ env.AWS_REGION }}"
 
-    - name: Upload Trivy Report
+    - name: Upload Trivy Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: SBOM Artifacts
-        path: ${{ env.SERVICE }}-sbom.xml
+        name: ${{ env.SERVICE }}-trivy-sbom
+        path: .ci_artifacts/${{ env.SERVICE }}/${{ github.sha }}/trivy-scan/
+
 
   # -------------------------------
   # Cosign Signature and Verify it
@@ -207,22 +225,16 @@ jobs:
         aws_role: arn:aws:iam::063630846340:role/oidc-github
         aws_region: ${{ env.AWS_REGION }}
         registry: ${{ env.REGISTRY }}
-    - name: Install Cosign
-      run: |
-        wget https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
-        sudo mv cosign-linux-amd64 /usr/local/bin/cosign
-        sudo chmod +x /usr/local/bin/cosign
-    - name: Sign Docker Image (keyless OIDC)
-      env:
-        COSIGN_EXPERIMENTAL: "true"
-      run: |
-        cosign sign ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
-        cosign verify \
-          --certificate-identity "https://github.com/YonatanDas/Multi-Environment-Microservices/.github/workflows/gateway.yaml@refs/heads/test-workflows" \
-          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-          ${{ env.REGISTRY }}/${{ env.SERVICE }}:latest
+    - name: Cosign Sign and Verify
+      run: ./.github/scripts/06-cosign-sign-verify.sh \
+            "${{ env.SERVICE }}" \
+            "${{ env.REGISTRY }}" \
+            ".github/workflows/${{ env.SERVICE }}.yaml" \
+            "refs/heads/test-workflows"
 
-
+  # -------------------------------
+  # COLLECT ALL ARTIFACTS AND UPLOAD TO S3
+  # -------------------------------
   Collect-Artifacts:
     runs-on: ubuntu-latest
     needs: [Lint-And-Test, Trivy-FS-Scan, Build-And-Push, Scan-And-SBOM, Sign-And-Verify]
@@ -239,4 +251,4 @@ jobs:
         with:
           path: collected-artifacts/
       - name: Upload to S3
-            run: ./.github/scripts/artifact_collect_and_s3.sh "gateway" "my-ci-artifacts55" "builds"
+        run: ./.github/scripts/artifact_collect_and_s3.sh "${{ env.SERVICE }}" "my-ci-artifacts55" "builds"

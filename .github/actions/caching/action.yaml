@@ -1,0 +1,19 @@
+name: "Docker Layer Cache"
+description: "Sets up and restores Docker Buildx cache for faster builds."
+
+inputs:
+  cache-key:
+    description: "Optional custom cache key (defaults to OS + commit SHA)"
+    required: false
+    default: ${{ runner.os }}-buildx-${{ github.sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore Docker build cache
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ inputs.cache-key }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
