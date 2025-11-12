@@ -5,6 +5,8 @@ SERVICE_DIR=$1
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 REPORT_NAME=$(basename "$SERVICE_DIR")-trivy-report.txt
 
+ls -la
+pwd
 echo "🔎 Running Trivy FS scan on $SERVICE_DIR"
 
 mkdir -p trivy-reports
