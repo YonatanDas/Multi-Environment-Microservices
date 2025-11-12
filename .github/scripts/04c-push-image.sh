@@ -9,7 +9,6 @@ set -euo pipefail
 
 SERVICE="${1:-}"
 REGISTRY="${2:-}"
-AWS_REGION="${3:-}"
 
 if [[ -z "$SERVICE" || -z "$REGISTRY" ]]; then
   echo "❌ Usage: $0 <SERVICE> <REGISTRY> <AWS_REGION>" >&2
@@ -21,7 +20,7 @@ LOCAL_IMAGE="${SERVICE}:pre-scan"
 REMOTE_IMAGE="${REGISTRY}/${SERVICE}:${IMAGE_TAG}"
 
 echo "🔑 Logging in to AWS ECR..."
-aws ecr get-login-password --region "${AWS_REGION}" | docker login \
+aws ecr get-login-password --region us-east-1 | docker login \
   --username AWS \
   --password-stdin "${REGISTRY}"
 
