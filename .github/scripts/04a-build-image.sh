@@ -19,13 +19,8 @@ docker buildx build \
   --load \
   --file "${SERVICE_DIR}/Dockerfile" \
   --cache-from "type=local,src=${CACHE_DIR}" \
-  --cache-to "type=local,dest=${NEW_CACHE_DIR},mode=max" \
   --tag "${IMAGE_URI}" \
   "${SERVICE_DIR}"
-
-if [ -d "${NEW_CACHE_DIR}" ]; then
-  mv "${NEW_CACHE_DIR}" "${CACHE_DIR}"
-fi
 
 echo "📦 Extracting JAR file from image for scanning..."
 CID=$(docker create "${IMAGE_URI}")
