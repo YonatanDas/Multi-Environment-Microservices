@@ -236,6 +236,7 @@ jobs:
     needs: [Lint-And-Test, Trivy-FS-Scan, Build-And-Push, Scan-And-SBOM, Sign-And-Verify]
 
     steps:
+      - uses: actions/checkout@v3
       - name: Setup AWS + ECR
         uses: ./.github/actions/env-setup
         with:
