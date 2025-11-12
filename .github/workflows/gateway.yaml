@@ -137,7 +137,9 @@ jobs:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
       SERVICE: ${{ matrix.SERVICE }}
-      SERVICE_DIR: ./${{ matrix.SERVICE }} 
+      SERVICE_DIR: ./${{ matrix.SERVICE }}
+      AWS_REGION: us-east-1
+      REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com 
 
     steps:
       - uses: actions/checkout@v3
