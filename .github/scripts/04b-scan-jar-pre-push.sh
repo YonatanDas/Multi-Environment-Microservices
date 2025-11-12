@@ -24,8 +24,11 @@ fi
 
 echo "🔍 Scanning extracted JARs with Trivy..."
 for jar in "${JAR_PATH}"/*.jar; do
-  trivy fs --severity HIGH,CRITICAL --ignore-unfixed \
-    --format table --output "${REPORT_DIR}/$(basename "$jar")-scan.txt" "$jar" || true
+  trivy fs 
+  --severity HIGH,CRITICAL
+ --ignore-unfixed \
+    --format table \
+     --output "${REPORT_DIR}/$(basename "$jar")-scan.txt" "$jar" || true
 done
 
 echo "✅ Pre-push JAR vulnerability scan complete."
