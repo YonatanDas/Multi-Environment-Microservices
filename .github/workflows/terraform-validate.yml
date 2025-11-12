@@ -1,0 +1,222 @@
+name: Terraform Validate
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+  push:
+    branches: [main, test-workflows]
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+
+concurrency:
+  group: terraform-validate-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  security-events: write
+
+env:
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: 1.6.0
+  TF_STATE_BUCKET: banking-terraform-state-18.10.25
+  TF_LOCK_TABLE: terraform-locks
+
+jobs:
+  terraform-format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive terraform/
+
+  terraform-validate:
+    name: Validate (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, stag, prod]
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/${{ matrix.env }}
+        run: terraform init
+        continue-on-error: false
+
+      - name: Validate Terraform
+        working-directory: terraform/environments/${{ matrix.env }}
+        run: |
+          terraform validate > validation-results-${{ matrix.env }}.txt 2>&1
+          cat validation-results-${{ matrix.env }}.txt
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-results-${{ matrix.env }}
+          path: terraform/environments/${{ matrix.env }}/validation-results-${{ matrix.env }}.txt
+          retention-days: 7
+
+  terraform-security-checkov:
+    name: Security Scan (Checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Checkov
+        run: |
+          pip install checkov
+          checkov --version
+
+      - name: Run Checkov JSON
+        run: |
+          checkov -d terraform/ --framework terraform --output json --output-file-path checkov-report.json || true
+
+      - name: Run Checkov SARIF
+        run: |
+          checkov -d terraform/ --framework terraform --output sarif --output-file-path checkov-report.sarif || true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-report.sarif
+        continue-on-error: true
+
+      - name: Upload Checkov report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-report
+          path: |
+            checkov-report.json
+            checkov-report.sarif
+          retention-days: 90
+          if-no-files-found: ignore
+
+  terraform-security-tfsec:
+    name: Security Scan (tfsec)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          tfsec --version
+
+      - name: Run tfsec JSON
+        run: |
+          tfsec terraform/ --format json --out tfsec-report.json || true
+
+      - name: Run tfsec SARIF
+        run: |
+          tfsec terraform/ --format sarif --out tfsec-report.sarif || true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: tfsec-report.sarif
+        continue-on-error: true
+
+      - name: Upload tfsec report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tfsec-report
+          path: |
+            tfsec-report.json
+            tfsec-report.sarif
+          retention-days: 90
+          if-no-files-found: ignore
+
+  terraform-cost-estimation:
+    name: Cost Estimation (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && secrets.INFRACOST_API_KEY != ''
+    strategy:
+      matrix:
+        env: [dev, stag, prod]
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+        continue-on-error: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/${{ matrix.env }}
+        run: terraform init
+
+      - name: Run Infracost breakdown
+        working-directory: terraform/environments/${{ matrix.env }}
+        run: |
+          infracost breakdown --path . --format json --out infracost-${{ matrix.env }}.json
+          infracost breakdown --path . --format html --out infracost-${{ matrix.env }}.html
+
+      - name: Upload cost report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: infracost-${{ matrix.env }}
+          path: |
+            terraform/environments/${{ matrix.env }}/infracost-${{ matrix.env }}.json
+            terraform/environments/${{ matrix.env }}/infracost-${{ matrix.env }}.html
+          retention-days: 30
+
+      - name: Comment PR with cost estimate
+        uses: infracost/actions/comment@v2
+        if: github.event_name == 'pull_request' && secrets.INFRACOST_API_KEY != ''
+        with:
+          path: terraform/environments/${{ matrix.env }}/infracost-${{ matrix.env }}.json
+          behavior: update
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+

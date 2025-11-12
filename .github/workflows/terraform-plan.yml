@@ -1,0 +1,371 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to plan'
+        required: true
+        type: choice
+        options:
+          - dev
+          - stag
+          - prod
+
+concurrency:
+  group: terraform-plan-${{ github.ref }}-${{ github.event.inputs.environment || 'all' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+env:
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: 1.6.0
+  TF_STATE_BUCKET: banking-terraform-state-18.10.25
+  TF_LOCK_TABLE: terraform-locks
+
+jobs:
+  detect-terraform-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform-changed: ${{ steps.filter.outputs.terraform }}
+      dev-changed: ${{ steps.filter.outputs.dev }}
+      stag-changed: ${{ steps.filter.outputs.stag }}
+      prod-changed: ${{ steps.filter.outputs.prod }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+            dev:
+              - 'terraform/environments/dev/**'
+            stag:
+              - 'terraform/environments/stag/**'
+            prod:
+              - 'terraform/environments/prod/**'
+
+  terraform-plan-dev:
+    name: Plan Dev
+    runs-on: ubuntu-latest
+    needs: detect-terraform-changes
+    if: needs.detect-terraform-changes.outputs.dev-changed == 'true' || github.event_name == 'workflow_dispatch'
+    environment: dev
+    outputs:
+      plan-exists: ${{ steps.plan.outputs.plan-exists }}
+      resource-add: ${{ steps.summary.outputs.resource-add }}
+      resource-change: ${{ steps.summary.outputs.resource-change }}
+      resource-destroy: ${{ steps.summary.outputs.resource-destroy }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/dev
+        run: terraform init
+
+      - name: Generate Terraform plan
+        id: plan
+        working-directory: terraform/environments/dev
+        run: |
+          terraform plan -var-file=dev.tfvars -out=tfplan-dev -no-color | tee plan-output.txt
+          echo "plan-exists=true" >> $GITHUB_OUTPUT
+
+      - name: Convert plan to JSON
+        working-directory: terraform/environments/dev
+        run: terraform show -json tfplan-dev > tfplan-dev.json
+
+      - name: Generate plan summary
+        id: summary
+        working-directory: terraform/environments/dev
+        run: |
+          RESOURCE_ADD=$(jq -r '.resource_changes[] | select(.change.actions[] == "create") | .address' tfplan-dev.json | wc -l)
+          RESOURCE_CHANGE=$(jq -r '.resource_changes[] | select(.change.actions[] == "update") | .address' tfplan-dev.json | wc -l)
+          RESOURCE_DESTROY=$(jq -r '.resource_changes[] | select(.change.actions[] == "delete") | .address' tfplan-dev.json | wc -l)
+          echo "resource-add=$RESOURCE_ADD" >> $GITHUB_OUTPUT
+          echo "resource-change=$RESOURCE_CHANGE" >> $GITHUB_OUTPUT
+          echo "resource-destroy=$RESOURCE_DESTROY" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan Results for dev" > plan-summary-dev.txt
+          echo "" >> plan-summary-dev.txt
+          echo "### Summary" >> plan-summary-dev.txt
+          echo "- **Resources to add**: $RESOURCE_ADD" >> plan-summary-dev.txt
+          echo "- **Resources to change**: $RESOURCE_CHANGE" >> plan-summary-dev.txt
+          echo "- **Resources to destroy**: $RESOURCE_DESTROY" >> plan-summary-dev.txt
+          echo "" >> plan-summary-dev.txt
+          echo "### Plan Details" >> plan-summary-dev.txt
+          echo "<details>" >> plan-summary-dev.txt
+          echo "<summary>Click to expand plan output</summary>" >> plan-summary-dev.txt
+          echo "" >> plan-summary-dev.txt
+          echo "\`\`\`" >> plan-summary-dev.txt
+          cat plan-output.txt >> plan-summary-dev.txt
+          echo "\`\`\`" >> plan-summary-dev.txt
+          echo "" >> plan-summary-dev.txt
+          echo "</details>" >> plan-summary-dev.txt
+
+      - name: Upload plan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-dev
+          path: |
+            terraform/environments/dev/tfplan-dev
+            terraform/environments/dev/tfplan-dev.json
+            terraform/environments/dev/plan-summary-dev.txt
+          retention-days: 7
+
+
+  terraform-plan-stag:
+    name: Plan Staging
+    runs-on: ubuntu-latest
+    needs: detect-terraform-changes
+    if: needs.detect-terraform-changes.outputs.stag-changed == 'true' || github.event_name == 'workflow_dispatch'
+    environment: stag
+    outputs:
+      plan-exists: ${{ steps.plan.outputs.plan-exists }}
+      resource-add: ${{ steps.summary.outputs.resource-add }}
+      resource-change: ${{ steps.summary.outputs.resource-change }}
+      resource-destroy: ${{ steps.summary.outputs.resource-destroy }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/stag
+        run: terraform init
+
+      - name: Generate Terraform plan
+        id: plan
+        working-directory: terraform/environments/stag
+        run: |
+          terraform plan -var-file=stag.tfvars -out=tfplan-stag -no-color | tee plan-output.txt
+          echo "plan-exists=true" >> $GITHUB_OUTPUT
+
+      - name: Convert plan to JSON
+        working-directory: terraform/environments/stag
+        run: terraform show -json tfplan-stag > tfplan-stag.json
+
+      - name: Generate plan summary
+        id: summary
+        working-directory: terraform/environments/stag
+        run: |
+          RESOURCE_ADD=$(jq -r '.resource_changes[] | select(.change.actions[] == "create") | .address' tfplan-stag.json | wc -l)
+          RESOURCE_CHANGE=$(jq -r '.resource_changes[] | select(.change.actions[] == "update") | .address' tfplan-stag.json | wc -l)
+          RESOURCE_DESTROY=$(jq -r '.resource_changes[] | select(.change.actions[] == "delete") | .address' tfplan-stag.json | wc -l)
+          echo "resource-add=$RESOURCE_ADD" >> $GITHUB_OUTPUT
+          echo "resource-change=$RESOURCE_CHANGE" >> $GITHUB_OUTPUT
+          echo "resource-destroy=$RESOURCE_DESTROY" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan Results for stag" > plan-summary-stag.txt
+          echo "" >> plan-summary-stag.txt
+          echo "### Summary" >> plan-summary-stag.txt
+          echo "- **Resources to add**: $RESOURCE_ADD" >> plan-summary-stag.txt
+          echo "- **Resources to change**: $RESOURCE_CHANGE" >> plan-summary-stag.txt
+          echo "- **Resources to destroy**: $RESOURCE_DESTROY" >> plan-summary-stag.txt
+          echo "" >> plan-summary-stag.txt
+          echo "### Plan Details" >> plan-summary-stag.txt
+          echo "<details>" >> plan-summary-stag.txt
+          echo "<summary>Click to expand plan output</summary>" >> plan-summary-stag.txt
+          echo "" >> plan-summary-stag.txt
+          echo "\`\`\`" >> plan-summary-stag.txt
+          cat plan-output.txt >> plan-summary-stag.txt
+          echo "\`\`\`" >> plan-summary-stag.txt
+          echo "" >> plan-summary-stag.txt
+          echo "</details>" >> plan-summary-stag.txt
+
+      - name: Upload plan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-stag
+          path: |
+            terraform/environments/stag/tfplan-stag
+            terraform/environments/stag/tfplan-stag.json
+            terraform/environments/stag/plan-summary-stag.txt
+          retention-days: 7
+
+
+  terraform-plan-prod:
+    name: Plan Production
+    runs-on: ubuntu-latest
+    needs: detect-terraform-changes
+    if: needs.detect-terraform-changes.outputs.prod-changed == 'true' || github.event_name == 'workflow_dispatch'
+    environment: prod
+    outputs:
+      plan-exists: ${{ steps.plan.outputs.plan-exists }}
+      resource-add: ${{ steps.summary.outputs.resource-add }}
+      resource-change: ${{ steps.summary.outputs.resource-change }}
+      resource-destroy: ${{ steps.summary.outputs.resource-destroy }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/prod
+        run: terraform init
+
+      - name: Generate Terraform plan
+        id: plan
+        working-directory: terraform/environments/prod
+        run: |
+          terraform plan -var-file=prod.tfvars -out=tfplan-prod -no-color | tee plan-output.txt
+          echo "plan-exists=true" >> $GITHUB_OUTPUT
+
+      - name: Convert plan to JSON
+        working-directory: terraform/environments/prod
+        run: terraform show -json tfplan-prod > tfplan-prod.json
+
+      - name: Generate plan summary
+        id: summary
+        working-directory: terraform/environments/prod
+        run: |
+          RESOURCE_ADD=$(jq -r '.resource_changes[] | select(.change.actions[] == "create") | .address' tfplan-prod.json | wc -l)
+          RESOURCE_CHANGE=$(jq -r '.resource_changes[] | select(.change.actions[] == "update") | .address' tfplan-prod.json | wc -l)
+          RESOURCE_DESTROY=$(jq -r '.resource_changes[] | select(.change.actions[] == "delete") | .address' tfplan-prod.json | wc -l)
+          echo "resource-add=$RESOURCE_ADD" >> $GITHUB_OUTPUT
+          echo "resource-change=$RESOURCE_CHANGE" >> $GITHUB_OUTPUT
+          echo "resource-destroy=$RESOURCE_DESTROY" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan Results for prod" > plan-summary-prod.txt
+          echo "" >> plan-summary-prod.txt
+          echo "### Summary" >> plan-summary-prod.txt
+          echo "- **Resources to add**: $RESOURCE_ADD" >> plan-summary-prod.txt
+          echo "- **Resources to change**: $RESOURCE_CHANGE" >> plan-summary-prod.txt
+          echo "- **Resources to destroy**: $RESOURCE_DESTROY" >> plan-summary-prod.txt
+          echo "" >> plan-summary-prod.txt
+          echo "### Plan Details" >> plan-summary-prod.txt
+          echo "<details>" >> plan-summary-prod.txt
+          echo "<summary>Click to expand plan output</summary>" >> plan-summary-prod.txt
+          echo "" >> plan-summary-prod.txt
+          echo "\`\`\`" >> plan-summary-prod.txt
+          cat plan-output.txt >> plan-summary-prod.txt
+          echo "\`\`\`" >> plan-summary-prod.txt
+          echo "" >> plan-summary-prod.txt
+          echo "</details>" >> plan-summary-prod.txt
+
+      - name: Upload plan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-prod
+          path: |
+            terraform/environments/prod/tfplan-prod
+            terraform/environments/prod/tfplan-prod.json
+            terraform/environments/prod/plan-summary-prod.txt
+          retention-days: 7
+
+
+  comment-plan-summary:
+    name: Plan Summary Comment
+    runs-on: ubuntu-latest
+    needs: [terraform-plan-dev, terraform-plan-stag, terraform-plan-prod]
+    if: github.event_name == 'pull_request' && always() && (needs.terraform-plan-dev.result != 'skipped' || needs.terraform-plan-stag.result != 'skipped' || needs.terraform-plan-prod.result != 'skipped')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download plan artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: tfplan-*
+          merge-multiple: true
+
+      - name: Generate combined summary
+        run: |
+          echo "# Terraform Plan Summary" > combined-summary.md
+          echo "" >> combined-summary.md
+          echo "## Environments Planned" >> combined-summary.md
+          echo "" >> combined-summary.md
+          
+          # Find plan summary files in any location
+          DEV_SUMMARY=$(find . -name "plan-summary-dev.txt" -type f 2>/dev/null | head -1)
+          STAG_SUMMARY=$(find . -name "plan-summary-stag.txt" -type f 2>/dev/null | head -1)
+          PROD_SUMMARY=$(find . -name "plan-summary-prod.txt" -type f 2>/dev/null | head -1)
+          
+          if [ -n "$DEV_SUMMARY" ] && [ -f "$DEV_SUMMARY" ]; then
+            echo "### Dev" >> combined-summary.md
+            cat "$DEV_SUMMARY" >> combined-summary.md
+            echo "" >> combined-summary.md
+          fi
+          
+          if [ -n "$STAG_SUMMARY" ] && [ -f "$STAG_SUMMARY" ]; then
+            echo "### Staging" >> combined-summary.md
+            cat "$STAG_SUMMARY" >> combined-summary.md
+            echo "" >> combined-summary.md
+          fi
+          
+          if [ -n "$PROD_SUMMARY" ] && [ -f "$PROD_SUMMARY" ]; then
+            echo "### Production" >> combined-summary.md
+            cat "$PROD_SUMMARY" >> combined-summary.md
+            echo "" >> combined-summary.md
+          fi
+          
+          # If no summaries found, add a message
+          if [ -z "$DEV_SUMMARY" ] && [ -z "$STAG_SUMMARY" ] && [ -z "$PROD_SUMMARY" ]; then
+            echo "No plan summaries found. Please check the plan jobs for details." >> combined-summary.md
+          fi
+
+      - name: Comment PR with combined summary
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('combined-summary.md')) {
+              const summary = fs.readFileSync('combined-summary.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
+
