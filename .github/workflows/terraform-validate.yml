@@ -192,11 +192,11 @@ jobs:
 
       - name: Setup AWS CLI
         if: steps.setup-infracost.outcome == 'success'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: ./.github/actions/env-setup
         with:
-          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          audience: sts.amazonaws.com
+          aws_role: arn:aws:iam::063630846340:role/oidc-github
+          aws_region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
 
       - name: Initialize Terraform
         if: steps.setup-infracost.outcome == 'success'
