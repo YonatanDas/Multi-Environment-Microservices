@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, stage, prod] # If we want all env tests we do matrix for all env (dev, stage, prod)
+        env: [dev, stag, prod] # If we want all env tests we do matrix for all env (dev, stage, prod)
       fail-fast: false
     steps:
       - name: Checkout repository
@@ -223,7 +223,7 @@ jobs:
 
       - name: Comment PR with cost estimate
         if: steps.setup-infracost.outcome == 'success'
-        uses: infracost/actions/comment@v2
+        uses: infracost/actions/comment@v1
         with:
           path: terraform/environments/${{ matrix.env }}/infracost-${{ matrix.env }}.json
           behavior: update
