@@ -207,8 +207,8 @@ jobs:
         if: steps.setup-infracost.outcome == 'success'
         working-directory: terraform/environments/${{ matrix.env }}
         run: |
-          infracost breakdown --path . --format json --out infracost-${{ matrix.env }}.json
-          infracost breakdown --path . --format html --out infracost-${{ matrix.env }}.html
+          infracost breakdown --path . --format json --out-file infracost-${{ matrix.env }}.json
+          infracost breakdown --path . --format html --out-file infracost-${{ matrix.env }}.html
 
       - name: Upload cost report
         if: steps.setup-infracost.outcome == 'success'
