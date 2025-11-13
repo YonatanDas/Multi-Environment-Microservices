@@ -24,6 +24,7 @@ env:
   TERRAFORM_VERSION: 1.6.0
   TF_STATE_BUCKET: banking-terraform-state-18.10.25
   TF_LOCK_TABLE: terraform-locks
+  INFRACOST_API_KEY: ico-PoGGVegkNxL28BV4iHFOuA9EFlAohd19
 
 jobs:
   terraform-format-check:
