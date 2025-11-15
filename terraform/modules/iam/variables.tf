@@ -9,8 +9,8 @@ variable "cluster_name" {
 }
 
 variable "name_prefix" {
-  type        = string
-  default     = "banking"
+  type    = string
+  default = "banking"
 }
 
 variable "aws_account_id" {

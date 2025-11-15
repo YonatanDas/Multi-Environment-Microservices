@@ -1,12 +1,12 @@
 variable "env" {
-  type = string 
+  type = string
 }
 
 variable "oidc_provider_arn" {
-   type = string
+  type = string
 }
 variable "oidc_provider_url" {
-  type = string 
+  type = string
 }
 
 variable "secretsmanager_arns" {

@@ -46,7 +46,7 @@ resource "aws_eks_node_group" "default" {
 
   depends_on = [
     aws_eks_cluster.this
-    ]
+  ]
 }
 
 ##########################################
@@ -63,18 +63,17 @@ resource "aws_iam_openid_connect_provider" "eks" {
 
   depends_on = [
     aws_eks_cluster.this
-    ]
+  ]
 }
 
 ##########################################
 # Helm Release: External Secrets Operator
 ##########################################
 resource "helm_release" "external_secrets" {
-  name       = "external-secrets"
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  namespace  = "external-secrets"
-
+  name             = "external-secrets"
+  repository       = "https://charts.external-secrets.io"
+  chart            = "external-secrets"
+  namespace        = "external-secrets"
   create_namespace = true
   version          = "0.9.11"
 
@@ -83,10 +82,8 @@ resource "helm_release" "external_secrets" {
     aws_iam_openid_connect_provider.eks,
   ]
 
-  set = [
-    {
-      name  = "installCRDs"
-      value = "true"
-    }
-  ]
+  set {
+    name  = "installCRDs"
+    value = "true"
+  }
 }

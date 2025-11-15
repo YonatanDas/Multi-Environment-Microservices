@@ -31,4 +31,4 @@ output "private_route_table_id" {
 output "rds_sg_id" {
   description = "Security Group ID for RDS"
   value       = aws_security_group.rds_sg.id
-  }
+}

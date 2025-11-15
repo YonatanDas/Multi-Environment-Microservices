@@ -23,7 +23,7 @@ output "cluster_endpoint" {
 
 output "rds_access_role_arns" {
   description = "IAM role ARNs for all microservices (accounts, cards, loans)"
-  value = { for k, m in module.rds_access_role : k => m.rds_access_role_arn }
+  value       = { for k, m in module.rds_access_role : k => m.rds_access_role_arn }
 }
 
 output "cluster_security_group_id" {
@@ -48,7 +48,7 @@ output "oidc_provider_url" {
 
 output "external_secrets_role_arn" {
   description = "IAM Role ARN for External Secrets Operator"
-  value       = module.external_secrets_role.eso_role_arn 
+  value       = module.external_secrets_role.eso_role_arn
 }
 
 output "eso_role_arn" {

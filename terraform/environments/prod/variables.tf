@@ -9,8 +9,8 @@ variable "environment" {
 }
 
 variable "name_prefix" {
-  type        = string
-  default     = "banking"
+  type    = string
+  default = "banking"
 }
 
 variable "vpc_cidr" {
@@ -62,7 +62,7 @@ variable "db_instance_class" {}
 
 variable "aws_account_id" {
   description = "The AWS Account ID where resources will be created"
-  type        = string  
+  type        = string
 }
 
 variable "db_username" {

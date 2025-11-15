@@ -2,14 +2,14 @@
 # VPC
 ############################################
 module "vpc" {
-  source              = "../../modules/vpc"
-  environment         = var.environment
-  vpc_cidr            = var.vpc_cidr
-  public_subnet_cidrs = var.public_subnet_cidrs
+  source               = "../../modules/vpc"
+  environment          = var.environment
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
-  availability_zones  = var.availability_zones
+  availability_zones   = var.availability_zones
 
-  eks_node_sg_id      = module.eks.node_sg_id
+  eks_node_sg_id = module.eks.node_sg_id
 }
 
 ############################################
@@ -62,18 +62,18 @@ module "eks" {
 # RDS Database Instance
 ############################################
 module "rds" {
-  source             = "../../modules/rds"
+  source = "../../modules/rds"
 
-  environment        = var.environment
-  subnet_ids         = module.vpc.private_subnets
-  db_engine          = "postgres"
+  environment = var.environment
+  subnet_ids  = module.vpc.private_subnets
+  db_engine   = "postgres"
 
-  db_username        = var.db_username                
-  db_password        = random_password.db.result      
-  db_name            = "${var.environment}_bank"      
+  db_username = var.db_username
+  db_password = random_password.db.result
+  db_name     = "${var.environment}_bank"
 
-  db_instance_class  = var.db_instance_class
-  db_sg_id           = module.vpc.rds_sg_id
+  db_instance_class = var.db_instance_class
+  db_sg_id          = module.vpc.rds_sg_id
 
   backup_retention_period = var.backup_retention_period
   deletion_protection     = var.deletion_protection
@@ -85,10 +85,10 @@ module "rds" {
 ############################################
 # Generate a strong DB password once per environment
 resource "random_password" "db" {
-  length  = 20
-  special = true
+  length           = 20
+  special          = true
   override_special = "_%-!#$&*+-=<>?^~"
-  }
+}
 
 # Create DB credentials secret
 module "secrets" {
@@ -96,7 +96,7 @@ module "secrets" {
   environment = var.environment
   db_username = var.db_username
   db_password = random_password.db.result
-  db_endpoint     = module.rds.db_endpoint
+  db_endpoint = module.rds.db_endpoint
   db_name     = var.db_name
   secret_name = "${var.environment}-db-credentials"
 }
@@ -115,29 +115,29 @@ locals {
 
 module "rds_access_role" {
   source               = "../../modules/iam/rds_access_role"
-  for_each = local.microservices
+  for_each             = local.microservices
   environment          = var.environment
   oidc_provider_arn    = module.eks.oidc_provider_arn
   oidc_provider_url    = module.eks.oidc_provider_url
   namespace            = "default"
   service_account_name = each.value.sa_name
-  service_name = each.key
+  service_name         = each.key
 
   # use the ARN of the secret created above
-  db_secret_arn        = module.secrets.secret_arn
+  db_secret_arn = module.secrets.secret_arn
 }
 
 module "external_secrets_role" {
-  source               = "../../modules/iam/external_secrets_role"
-  env                  = var.environment
-  oidc_provider_arn    = module.eks.oidc_provider_arn
-  oidc_provider_url    = module.eks.oidc_provider_url
-  secretsmanager_arns  = [
+  source            = "../../modules/iam/external_secrets_role"
+  env               = var.environment
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+  secretsmanager_arns = [
     module.secrets.secret_arn
   ]
 }
 
-  # GitHub OIDC Module
+# GitHub OIDC Module
 ############################################
 
 module "github_oidc" {

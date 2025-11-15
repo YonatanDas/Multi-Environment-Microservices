@@ -2,17 +2,17 @@
 # General Variables
 ##########################################
 variable "cluster_name" {
-  type        = string
+  type = string
 }
 
 variable "cluster_version" {
-  type        = string
-  default     = "1.30"
+  type    = string
+  default = "1.30"
 }
 
 variable "environment" {
-  type        = string
-  default     = "dev"
+  type    = string
+  default = "dev"
 }
 
 ##########################################

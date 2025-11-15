@@ -1,6 +1,6 @@
 # Terraform variables for the Staging environment
 ############################################
-environment = "stag"
+environment    = "stag"
 aws_account_id = "YOUR_AWS_ACCOUNT_ID_HERE"
 
 # EKS Cluster Name
@@ -13,14 +13,14 @@ vpc_cidr = "10.0.0.0/16"
 
 # EKS Node Group Configuration
 ############################################
-node_instance_type = "t3.large"
+node_instance_type    = "t3.large"
 node_desired_capacity = 3
-node_min_size = 2
-node_max_size = 4
+node_min_size         = 2
+node_max_size         = 4
 
 # RDS Database Configuration
 ############################################
-db_instance_class = "db.m5.medium"
-db_username = "bankingdb"
+db_instance_class       = "db.m5.medium"
+db_username             = "bankingdb"
 backup_retention_period = 7
-deletion_protection = false
+deletion_protection     = false

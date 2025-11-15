@@ -23,36 +23,36 @@ variable "db_sg_id" {
 }
 
 variable "db_instance_class" {
-  type = string
+  type    = string
   default = "db.t3.micro"
 }
 
 variable "db_name" {
-  type = string 
+  type = string
 }
 
 variable "engine_version" {
-    default = "13.15"
+  default = "13.15"
 }
 
 variable "allocated_storage" {
-    default = 20
+  default = 20
 }
 
 variable "backup_retention_period" {
-    default = 0
+  default = 0
 }
 
 variable "multi_az" {
-    default = false
+  default = false
 }
 
 variable "publicly_accessible" {
-    default = false
+  default = false
 }
 
 variable "deletion_protection" {
-    default = false
+  default = false
 }
 
 

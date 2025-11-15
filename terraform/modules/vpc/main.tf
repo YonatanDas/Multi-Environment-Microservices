@@ -109,7 +109,7 @@ resource "aws_route" "private_nat_route" {
 
 # Associate private subnets with private RT
 resource "aws_route_table_association" "private_subnets_assoc" {
-  count      = length(aws_subnet.private)
+  count          = length(aws_subnet.private)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
@@ -123,10 +123,10 @@ resource "aws_security_group" "rds_sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Allow PostgreSQL from EKS nodes"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
+    description     = "Allow PostgreSQL from EKS nodes"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
     security_groups = [var.eks_node_sg_id] # Allow access from EKS worker nodes to RDS (SG --> SG)
   }
 
