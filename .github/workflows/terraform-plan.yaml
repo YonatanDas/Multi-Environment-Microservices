@@ -188,6 +188,13 @@ jobs:
   Collect-Artifacts:
     runs-on: ubuntu-latest
     needs: [terraform-plan-dev, terraform-plan-stag, terraform-plan-prod]
+    if: |
+      always() &&
+      (
+        needs.terraform-plan-dev.result == 'success' ||
+        needs.terraform-plan-stag.result == 'success' ||
+        needs.terraform-plan-prod.result == 'success'
+      )
     steps:
       - uses: actions/checkout@v3
       - name: Setup AWS + ECR
