@@ -1,0 +1,30 @@
+name: "Terraform Setup"
+description: "Set up Terraform CLI and initialize a working directory"
+
+inputs:
+  terraform_version:
+    description: "Terraform version to install"
+    required: false
+    default: "1.6.0"
+
+  working_directory:
+    description: "Terraform environment directory"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+
+    # Install Terraform
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+        terraform_wrapper: false
+
+    # Initialize Terraform
+    - name: Terraform Init
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform init
