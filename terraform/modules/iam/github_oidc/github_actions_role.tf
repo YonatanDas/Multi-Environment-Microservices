@@ -35,25 +35,33 @@ resource "aws_iam_policy" "github_actions_policy" {
           "ecr:CompleteLayerUpload",
           "ecr:UploadLayerPart",
           "ecr:InitiateLayerUpload",
-          "ecr:PutImage"
+          "ecr:PutImage",
+          "ecr:DescribeRepositories"
         ]
         Resource = "*"
       },
 
       # EKS access (depending on your security level)
       {
-        Effect = "Allow"
-        Action = [
-          "eks:DescribeCluster"
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:PutObjectAcl",
+          "s3:ListBucket"
         ]
-        Resource = "*"
+         "Resource": [
+        "arn:aws:s3:::my-ci-artifacts55",
+        "arn:aws:s3:::my-ci-artifacts55/*"
+      ]
       },
 
       # kubectl access (via auth token)
       {
         Effect = "Allow"
         Action = [
-          "sts:AssumeRole"
+          "sts:AssumeRole",
+          "sts:AssumeRoleWithWebIdentity"
         ]
         Resource = "*"
       }
