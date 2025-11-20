@@ -1,18 +1,137 @@
 # Multi-Environment Banking Platform
 
-[![Services CI/CD](https://github.com/<ORG>/<REPO>/actions/workflows/services-ci-cd.yaml/badge.svg)](https://github.com/<ORG>/<REPO>/actions/workflows/services-ci-cd.yaml)
-[![Terraform CI/CD](https://github.com/<ORG>/<REPO>/actions/workflows/terraform-ci-cd.yaml/badge.svg)](https://github.com/<ORG>/<REPO>/actions/workflows/terraform-ci-cd.yaml)
+[![Microservices CI](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/Microservice-Ci.yaml/badge.svg?branch=main)](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/Microservice-Ci.yaml)
+[![Terraform Validate](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/terraform-validate.yaml/badge.svg?branch=main)](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/terraform-validate.yaml)
 ![Terraform](https://img.shields.io/badge/IaC-Terraform-844FBA?logo=terraform)
 ![Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5?logo=kubernetes)
 ![AWS](https://img.shields.io/badge/Cloud-AWS-FF9900?logo=amazonaws)
 ![Helm](https://img.shields.io/badge/Package_Manager-Helm-0F1689?logo=helm)
 ![GitOps](https://img.shields.io/badge/GitOps-ArgoCD-FF4F8B?logo=argo)
 
-## Executive Summary
+This project takes a **local Spring Boot microservices app** (running only via `docker-compose`) and transforms it into a **production-grade, cloud-native platform on AWS**.
 
-This repository shows the end-to-end modernization of a Spring Boot banking application from a Docker Compose lab into a production-grade, multi-environment platform. Terraform now provisions VPC, EKS, ALB, RDS, Secrets Manager, Argo CD, and per-service IRSA roles on AWS. Helm charts encapsulate Kubernetes policies (HPAs, NetworkPolicies, ConfigMaps, ExternalSecrets) for each microservice, while GitHub Actions deliver DevSecOps automation (tests, Trivy, Cosign, SBOMs, Terraform security gates) and push signed images to ECR before Argo CD performs GitOps syncs into EKS.
+It showcases **end-to-end DevOps skills**: Terraform IaC, AWS EKS, Helm, GitHub Actions CI/CD, GitOps with ArgoCD, IRSA-based secret management, ALB ingress, and zero-trust pod networking.
 
-## Before vs. After
+---
+
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)  
+2. [Before vs After Architecture](#2-before-vs-after-architecture)  
+3. [Cloud Architecture Diagram](#3-cloud-architecture-diagram)  
+4. [Kubernetes Architecture Diagram](#4-kubernetes-architecture-diagram)  
+5. [Repository & Directory Structure](#5-repository--directory-structure)  
+6. [CI/CD Flow](#6-cicd-flow)  
+7. [IRSA Authentication Flow](#7-irsa-authentication-flow)  
+8. [NetworkPolicy Model](#8-networkpolicy-model)  
+9. [Deployment Workflow (GitOps + ArgoCD)](#9-deployment-workflow-gitops--argocd)  
+10. [Setup & Deployment Guide](#10-setup--deployment-guide)  
+11. [How Recruiters / Hiring Managers Should Read This Project](#11-how-recruiters--hiring-managers-should-read-this-project)  
+12. [Skills Demonstrated](#12-skills-demonstrated)  
+13. [Future Improvements](#13-future-improvements)  
+
+---
+
+## 1. Executive Summary
+
+**Original state**
+
+- Spring Boot microservices:
+  - Accounts, Cards, Loans
+  - Gateway (Spring Cloud Gateway)
+  - Config Server, Eureka, Feign
+- Deployed **only via Docker Compose** on a local machine
+- **No** Kubernetes, no IaC, no CI/CD, no secret management, no GitOps, no autoscaling, no network security
+
+**What this project does**
+
+This project **redesigns and migrates** the system into a **cloud-native banking microservices platform on AWS**, featuring:
+
+- **AWS EKS** cluster with **Terraform** (IaC)
+- **ALB Ingress** for external access
+- **AWS RDS** for persistent relational data
+- **AWS ECR** for image registry
+- **AWS Secrets Manager + IRSA + External Secrets** for secure secret delivery
+- **GitHub Actions CI/CD** for app and infra
+- **Helm charts per service** with HPA & NetworkPolicies
+- **GitOps with ArgoCD** for declarative, automated sync to Kubernetes
+- **Zero-trust networking** between pods using Kubernetes NetworkPolicies
+
+**Why it matters**
+
+This simulates how a real company would **modernize a legacy service into a secure, scalable, fully automated cloud platform**, and demonstrates end-to-end DevOps ownership.
+
+---
+
+## 2. Before vs After Architecture
+
+### 2.1 Legacy Architecture (Before)
+
+- **Services**
+  - Accounts, Cards, Loans, Gateway
+  - Config Server (Spring Cloud Config)
+  - Eureka (Service Discovery)
+  - Feign Clients
+
+- **Infrastructure**
+  - Single machine, **docker-compose only**
+  - Local JDBC database
+  - No load balancer
+  - No autoscaling
+
+- **Operational gaps**
+  - ❌ No Kubernetes  
+  - ❌ No Terraform / IaC  
+  - ❌ No CI/CD pipelines  
+  - ❌ No cloud database (RDS)  
+  - ❌ No secret management (passwords in configs)  
+  - ❌ No GitOps  
+  - ❌ No ingress controller  
+  - ❌ No pod-to-pod security / NetworkPolicies  
+
+### 2.2 Modern Cloud-Native Architecture (After)
+
+- **AWS Infrastructure (via Terraform)**
+  - VPC, subnets, route tables
+  - EKS cluster + managed node groups
+  - ALB Ingress Controller
+  - ECR repositories
+  - RDS instance
+  - IAM OIDC provider + IRSA roles
+  - Secrets Manager
+  - ArgoCD
+
+- **Application layer (Kubernetes + Helm)**
+  - Microservices: `accounts`, `cards`, `loans`, `gateway`
+  - Each deployed via **Helm chart**
+  - HPA for autoscaling
+  - NetworkPolicies for zero-trust traffic
+  - ConfigMaps & ExternalSecrets for configuration and secrets
+
+- **Delivery & Operations**
+  - GitHub Actions CI/CD for:
+    - Services (build, test, scan, build/push image, deploy via Helm)
+    - Terraform (fmt, validate, lint, Checkov, plan, apply with approval)
+  - GitOps with ArgoCD:
+    - Watches Git for manifest changes
+    - Syncs desired state to EKS automatically
+
+### 2.3 Summary Comparison
+
+| Aspect               | Before                               | After                                                     |
+|----------------------|---------------------------------------|-----------------------------------------------------------|
+| Deployment           | Local Docker Compose                  | AWS EKS (Terraform + Helm)                               |
+| Infra Management     | Manual                                | Terraform IaC + GitHub Actions                           |
+| Registry             | Local Docker                          | AWS ECR with versioned tags                              |
+| Database             | Local JDBC                            | AWS RDS                                                  |
+| Secrets              | In code / configs                     | AWS Secrets Manager + IRSA + External Secrets            |
+| Service Discovery    | Eureka                                | Native Kubernetes DNS                                    |
+| Config Mgmt          | Spring Config Server                  | ConfigMaps + ExternalSecrets                             |
+| Networking           | Flat, no isolation                    | NetworkPolicies (zero-trust) + ALB Ingress               |
+| Delivery             | Manual builds & deploys               | Automated CI/CD + GitOps (ArgoCD)                        |
+| Autoscaling          | None                                  | Horizontal Pod Autoscaler (HPA)                          |
+
+### 2.4 Capability Deep-Dive
 
 | Capability | Legacy Stack | Modernized Stack |
 | --- | --- | --- |
@@ -25,7 +144,9 @@ This repository shows the end-to-end modernization of a Spring Boot banking appl
 | Security | Plain-text secrets, no signing | IRSA + External Secrets Operator, Cosign signing, GitHub OIDC, S3 artifact trails |
 | Scalability | Static containers | HPAs (2–6 pods, CPU/Mem @70%), ALB target-type ip, EKS managed nodes |
 
-## Cloud Architecture
+---
+
+## 3. Cloud Architecture Diagram
 
 ```mermaid
 flowchart LR
@@ -58,7 +179,7 @@ flowchart LR
   RDS -->|JDBC| Accounts & Cards & Loans
 ```
 
-## Kubernetes Architecture
+## 4. Kubernetes Architecture Diagram
 
 ```mermaid
 flowchart TD
@@ -76,7 +197,7 @@ flowchart TD
   Obs[Actuator /metrics /health] --> PromStack[(Prom/Grafana collector)]
 ```
 
-## Repository & Folder Map
+## 5. Repository & Directory Structure
 
 ```text
 Multi-Environment-Microservices/
@@ -95,14 +216,14 @@ Multi-Environment-Microservices/
 └─ docker-compose.yaml                           # Legacy reference for local smoke testing
 ```
 
-## CI/CD & DevSecOps Flow
+## 6. CI/CD Flow
 
 - **Microservices pipeline (`.github/workflows/Microservice-Ci.yaml`):** dorny path-filter chooses changed services, runs Maven lint/tests, executes Trivy FS scans, builds multi-arch images with Buildx, pushes to ECR using GitHub OIDC, performs Trivy image + SBOM scans, Cosign signs and verifies images, and uploads every artifact (tests, scans, SBOM, build metadata) to S3.
 - **Terraform guardrails:** `terraform-validate` workflow enforces `terraform fmt`, multi-env `terraform validate`, and parallel Checkov + tfsec scans before artifacts are archived. `terraform-plan` produces per-environment binary/text/JSON plans and stores them for manual review. `terraform-apply` reuses signed plans, enforces branch protections, and tags prod deployments.
 - **Observability hooks:** every Spring service exposes `/actuator/health/*` and `/actuator/prometheus`, so probes + Prometheus scrapers can reuse the same endpoints. OTEL exporters are parameterized in `helm/environments/*/values.yaml`.
 - **Artifact integrity:** GitHub Actions writes SBOMs, Trivy reports, Terraform plans, and apply logs to S3 (`my-ci-artifacts55`) for auditability.
 
-## IRSA + External Secrets Flow
+## 7. IRSA Authentication Flow
 
 ```mermaid
 sequenceDiagram
@@ -123,7 +244,7 @@ sequenceDiagram
   K8sSecret-->>Pod: envFrom injection at deploy time
 ```
 
-## Zero-Trust NetworkPolicy Model
+## 8. NetworkPolicy Model
 
 ```mermaid
 graph LR
@@ -143,14 +264,14 @@ graph LR
 
 NetworkPolicies are generated from `helm/bankingapp-common/templates/_networkpolicy.tpl` and limit ingress to gateway + explicit peers, while egress is constrained to sibling services plus UDP 53/TCP 443 for DNS and AWS APIs (External Secrets). This enforces pod-to-pod isolation and parity with zero-trust expectations.
 
-## GitOps Deployment Workflow
+## 9. Deployment Workflow (GitOps + ArgoCD)
 
 1. Helm environment charts (`helm/environments/dev-env`, etc.) reference the packaged service charts and template shared ConfigMaps, ExternalSecrets, and SecretStores.
 2. Terraform installs Argo CD (`helm_release.argocd`) and the AWS Load Balancer + External Secrets operators inside EKS.
 3. Argo CD monitors this repository, syncs the environment chart per namespace, and continuously reconciles Deployments, Services, HPAs, NetworkPolicies, and ExternalSecrets.
 4. GitHub Actions push new container tags (`v1.0.0`, `latest`) to ECR; Argo CD picks up the image tag bump committed to Git, guaranteeing Git-driven rollouts and instant rollbacks.
 
-## Deployment Guide
+## 10. Setup & Deployment Guide
 
 1. **Prerequisites:** AWS CLI v2, kubectl, helm, Terraform ≥1.6, Cosign, and access to an AWS account with permissions to create EKS/RDS/VPC resources. Configure an S3 bucket and DynamoDB table (see `terraform/environments/*/backend.tf`).
 2. **Clone & bootstrap:** `git clone` this repo, create a GitHub OIDC role (module `iam/github_oidc` does this), and populate required secrets (`AWS_ACCOUNT_ID`, `AWS_REGION`, artifact bucket) in GitHub.
