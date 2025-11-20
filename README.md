@@ -159,28 +159,85 @@ NetworkPolicies are generated from `helm/bankingapp-common/templates/_networkpol
 7. **Sync Kubernetes via GitOps:** update the Helm image tag in `helm/bankingapp-services/<service>/values.yaml` (or environment overrides) and let Argo CD detect/roll out the revision. Verify via `kubectl get pods,ingress,hpa,networkpolicy`.
 8. **Smoke test:** hit the ALB DNS on port 80 → `gatewayserver` (8072) → `/api/{accounts,cards,loans}`. Use `/actuator/health` and `/actuator/prometheus` for liveness and metrics validation.
 
-## Recruiter Lens
+## 11. How Recruiters / Hiring Managers Should Read This Project
 
-- Demonstrates owning a full greenfield migration: requirements gathering, IaC modularization, Terraform governance, Kubernetes manifest engineering, and GitOps operations.
-- Shows deep security focus: IRSA, External Secrets Operator, Trivy, Cosign, Checkov, tfsec, S3 audit trails, zero-trust networking, and branch-protected Terraform applies.
-- Highlights scalability & reliability practices: HPAs, ALB target-type ip, readiness/liveness probes, environment-specific Helm overlays, and Observable Spring Actuator endpoints.
-- Proves CI/CD maturity: multi-stage GitHub Actions with caching, matrix builds, artifact promotion, and manual approval steps for infra.
+This project demonstrates the ability to:
 
-## Skills Demonstrated
+- Take a legacy, non-cloud-ready system and deliver a full modernization roadmap plus execution.
+- Implement Terraform-based AWS infrastructure from scratch (VPC, EKS, managed node groups, RDS, IAM/IRSA, ECR, ALB controller, Secrets Manager, Argo CD, External Secrets Operator).
+- Design a secure, scalable Kubernetes deployment with service-per-chart Helm layout, centralized `bankingapp-common` templates, HPAs (2–6 pods, CPU/memory @70%), and NetworkPolicies for zero-trust communication.
+- Operate dual CI/CD pipelines: Microservices delivery (build → test → scan → sign → push → SBOM) and Terraform delivery (fmt/validate → security checks → plan → approval → apply).
+- Apply best-practice cloud security: IRSA workload identity, AWS Secrets Manager via External Secrets, NetworkPolicies restricting ingress/egress, GitHub OIDC federation, Cosign signature verification, and artifact archival in S3.
+- Adopt GitOps (Argo CD) for declarative, auditable releases across `dev`, `stag`, and `prod` Helm environment charts.
 
-- **Cloud & IaC:** AWS VPC/EKS/RDS/ECR/Secrets Manager, Terraform modules with remote state + locking, Helm-based GitOps, Argo CD operations.
-- **Kubernetes:** Helm templating (shared chart + per-service overrides), External Secrets Operator, ALB ingress, NetworkPolicies, HPAs, ConfigMaps, service account annotations.
-- **DevSecOps:** GitHub Actions, custom composite actions, Trivy FS/image scans, Cosign signing, SBOM generation, Checkov/tfsec security gates, artifact retention in S3.
-- **Security & Networking:** IRSA, AWS OIDC federation, zero-trust pod communications, TLS termination via ALB, secret rotation via random_password + Secrets Manager.
-- **Observability & Resilience:** Spring Actuator, Prometheus exposure, Resilience4j defaults, readiness/liveness probes, structured logging.
+In short, the repository reflects production-ready DevOps/Platform Engineering work that stands up an entire banking platform on AWS with automation, security, and observability wired in.
 
-## Future Enhancements
+## 12. Skills Demonstrated
 
-- Automate canary or blue/green deployments via Argo Rollouts to complement the current Helm releases.
-- Add managed Prometheus/Grafana or OpenTelemetry Collector and wire OTEL endpoints already parameterized in `helm/environments/*/templates/configmap.yaml`.
-- Expand network policies to namespace isolation and integrate service mesh (e.g., AWS App Mesh or Istio) for mTLS.
-- Implement automated database migrations (Flyway/Liquibase) inside the CI pipeline before rolling out services.
-- Add chaos engineering hooks (Litmus, AWS FIS) to validate HPA + Resilience4j behavior under failure.
+### 12.1 Cloud & AWS
+
+- EKS cluster design & provisioning (`terraform/modules/eks`) with control-plane logging and managed node groups.
+- VPC networking (public/private subnets, security groups, route tables in `terraform/modules/vpc`).
+- RDS Postgres provisioning and secure connectivity through private subnets plus generated credentials (`terraform/modules/rds` + `modules/secrets`).
+- ECR repositories per service with versioned tags; used by GitHub Actions Buildx jobs.
+- IAM OIDC provider & IRSA roles for each service account (`terraform/modules/iam/*`).
+- ALB Ingress Controller installation via Helm release, exposing the gateway service on HTTP 80.
+
+### 12.2 Kubernetes & Helm
+
+- Multi-service deployment with individual charts under `helm/bankingapp-services/*`.
+- DRY shared templates in `helm/bankingapp-common` for Deployments, HPAs, NetworkPolicies, ServiceAccounts, and Services.
+- HPAs defined per service (autoscaling/v2) to keep CPU/memory utilization near 70%.
+- NetworkPolicies enforcing explicit ingress/egress matrices and DNS/443 exceptions only.
+- ConfigMaps for shared runtime configuration plus ExternalSecret/SecretStore objects for secret injection.
+
+### 12.3 Infra-as-Code (Terraform)
+
+- Environment-based structure (`terraform/environments/{dev,stag,prod}`) with remote state (S3) and DynamoDB locking.
+- Reusable modules for VPC, EKS, RDS, IAM, ECR, Secrets, ALB controller, External Secrets Operator, and Argo CD.
+- Automated validation, linting, and security scanning (`terraform-validate` workflow uses fmt, validate, Checkov, tfsec, and custom scripts).
+- Workflow-driven plans (`terraform-plan`) and manual approvals before applies, aligning with team change-control processes.
+
+### 12.4 CI/CD & GitHub Actions
+
+- Multi-stage microservices workflow: Maven lint/tests → Trivy FS scan → Buildx image build → ECR push → Trivy image scan + SBOM → Cosign sign/verify → artifact upload to S3.
+- Separate Terraform workflows for validate, plan, and apply with environment inputs and approval gates.
+- Manual approval (plan artifact review) required for Terraform apply; dev can opt into auto-approve while staging/prod require uploaded plans.
+- Integrations with ECR, helm packaging, Argo CD GitOps, and S3 artifact archival for audit trails.
+
+### 12.5 Security & Networking
+
+- AWS Secrets Manager + External Secrets Operator eliminate plaintext credentials; IRSA ensures least-privilege access.
+- Network segmentation via generated NetworkPolicies with per-service allowlists and restricted egress.
+- ALB ingress configuration (gateway chart) with target-type `ip`, HTTP listener, and pod-level targeting.
+- Continuous security scanning: Trivy FS/image, Checkov, tfsec, Cosign signatures, SBOM creation, and GitHub OIDC trust relationships.
+
+### 12.6 GitOps & Release Engineering
+
+- Argo CD installed via Terraform Helm release; monitors `helm/environments/*` charts.
+- Declarative, versioned deployments (Helm values define image tags, replica counts, SA annotations).
+- Automated sync, drift detection, and rollback via Git history; aligns with GitOps best practices.
+
+## 13. Future Improvements
+
+Intentional next steps to keep evolving the platform:
+
+1. **Observability Stack**
+   - Add Prometheus + Grafana (or Amazon Managed Prometheus/Grafana) to consume existing `/actuator/prometheus` endpoints.
+   - Layer centralized logging (Loki or ELK) and define alert rules tied to SLOs.
+2. **Progressive Delivery**
+   - Introduce Argo Rollouts or Flagger for canary/blue-green strategies.
+   - Use ALB annotations for traffic shifting during rollouts.
+3. **Policy as Code**
+   - Add OPA/Gatekeeper or Kyverno to enforce guardrails (no privileged pods, mandatory resource limits, etc.).
+4. **More Environments**
+   - Expand the current dev/stag/prod Helm + Terraform stacks into separate AWS accounts or workspaces for stronger isolation.
+5. **Cost Optimization**
+   - Right-size node groups and RDS instances; consider spot nodes for non-prod workloads.
+6. **Advanced Security**
+   - Integrate container scanning into the registry lifecycle, add AWS WAF in front of ALB, and enable mTLS between services (service mesh).
+7. **Resilience & Automation**
+   - Automate schema migrations (Flyway/Liquibase) within CI, and add chaos experiments (Litmus or AWS FIS) to validate resilience patterns.
 
 ---
 
