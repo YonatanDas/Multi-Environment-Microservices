@@ -34,7 +34,7 @@ resource "aws_iam_policy" "alb_controller_policy" {
     Statement = [
 
       # Required by AWS documentation for ALB Controller
-            {
+      {
         Effect = "Allow",
         Action = [
           "iam:CreateServiceLinkedRole",
@@ -63,7 +63,7 @@ resource "aws_iam_policy" "alb_controller_policy" {
         ],
         Resource = "*"
       },
-            {
+      {
         Effect = "Allow",
         Action = [
           "cognito-idp:DescribeUserPoolClient",

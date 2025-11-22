@@ -77,6 +77,13 @@ resource "helm_release" "external_secrets" {
   create_namespace = true
   version          = "0.9.11"
 
+  # Ensure clean uninstall
+  atomic          = true
+  cleanup_on_fail = true
+  wait            = true
+  timeout         = 600
+  wait_for_jobs   = false
+
   set = [
     {
       name  = "installCRDs"
@@ -100,6 +107,13 @@ resource "helm_release" "aws_load_balancer_controller" {
   chart      = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   version    = "1.7.2"
+
+  # Ensure clean uninstall
+  atomic          = true
+  cleanup_on_fail = true
+  wait            = true
+  timeout         = 600
+  wait_for_jobs   = false
 
   set = [
     {
@@ -133,8 +147,6 @@ resource "helm_release" "aws_load_balancer_controller" {
     aws_iam_openid_connect_provider.eks,
     aws_eks_node_group.default
   ]
-
-  timeout = 600 # 10 minutes timeout
 }
 
 
@@ -145,7 +157,12 @@ resource "kubernetes_namespace" "argocd" {
   metadata {
     name = "argocd"
   }
+
+  timeouts {
+    delete = "10m"
+  }
 }
+
 
 resource "helm_release" "argocd" {
   name       = "argocd"
@@ -154,12 +171,22 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   version    = "5.51.0"
 
+  set = [
+    {
+      name  = "server.service.type"
+      value = "LoadBalancer"
+    }
+  ]
+
   depends_on = [
     aws_eks_cluster.this,
-    aws_eks_node_group.default, # Add this
+    aws_eks_node_group.default,
     helm_release.aws_load_balancer_controller
   ]
 
-  wait    = true # Add this
-  timeout = 600  # Add this
+  atomic          = true
+  cleanup_on_fail = true
+  wait            = true
+  timeout         = 600
+  wait_for_jobs   = false
 }

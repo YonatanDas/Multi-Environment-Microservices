@@ -9,7 +9,7 @@ module "vpc" {
   private_subnet_cidrs = var.private_subnet_cidrs
   availability_zones   = var.availability_zones
   cluster_name         = var.cluster_name
-  eks_node_sg_id = module.eks.node_sg_id
+  eks_node_sg_id       = module.eks.node_sg_id
 }
 
 ############################################

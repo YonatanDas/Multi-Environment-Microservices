@@ -166,13 +166,6 @@ jobs:
         with:
           cache-key: ${{ runner.os }}-buildx-${{ github.sha }}
 
-      - name: Setup AWS + ECR
-        uses: ./.github/actions/env-setup
-        with:
-          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
-          aws_region: ${{ env.AWS_REGION }}
-          registry: ${{ env.REGISTRY }}
-
       - name: Build Image
         run: |
           ./.github/scripts/04a-build-image.sh \
