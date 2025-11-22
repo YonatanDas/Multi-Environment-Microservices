@@ -26,6 +26,7 @@ permissions:
 env:
   AWS_REGION: us-east-1
   REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  AWS_ROLE: github-actions-eks-ecr-role
   Artifacts_S3_Bucket: my-ci-artifacts55
   Artifacts_S3_Prefix: Ci-Artifacts
   Artifacts_Folder: collected-artifacts
@@ -150,7 +151,7 @@ jobs:
       - name: Setup AWS + ECR
         uses: ./.github/actions/env-setup
         with:
-          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/oidc-github
+          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
           aws_region: ${{ env.AWS_REGION }}
           registry: ${{ env.REGISTRY }}
 
@@ -168,7 +169,7 @@ jobs:
       - name: Setup AWS + ECR
         uses: ./.github/actions/env-setup
         with:
-          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/oidc-github
+          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
           aws_region: ${{ env.AWS_REGION }}
           registry: ${{ env.REGISTRY }}
 
@@ -214,7 +215,7 @@ jobs:
     - name: Setup AWS + ECR
       uses: ./.github/actions/env-setup
       with:
-        aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/oidc-github
+        aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
         aws_region: ${{ env.AWS_REGION }}
         registry: ${{ env.REGISTRY }}
 
@@ -252,7 +253,7 @@ jobs:
     - name: Setup AWS + ECR
       uses: ./.github/actions/env-setup
       with:
-        aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/oidc-github
+        aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
         aws_region: ${{ env.AWS_REGION }}
         registry: ${{ env.REGISTRY }}
 
@@ -276,7 +277,7 @@ jobs:
       - name: Setup AWS + ECR
         uses: ./.github/actions/env-setup
         with:
-          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/oidc-github
+          aws_role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
           aws_region: ${{ env.AWS_REGION }}
           registry: ${{ env.REGISTRY }}
       - name: Download all artifacts
