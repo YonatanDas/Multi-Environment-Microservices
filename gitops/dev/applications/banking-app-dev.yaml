@@ -3,18 +3,7 @@ kind: Application
 metadata:
   name: banking-app-dev
   namespace: argocd
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: |
-      accounts=063630846340.dkr.ecr.us-east-1.amazonaws.com/accounts,
-      cards=063630846340.dkr.ecr.us-east-1.amazonaws.com/cards,
-      loans=063630846340.dkr.ecr.us-east-1.amazonaws.com/loans,
-      gatewayserver=063630846340.dkr.ecr.us-east-1.amazonaws.com/gatewayserver
-    argocd-image-updater.argoproj.io/write-back-method: git
-    argocd-image-updater.argoproj.io/git-branch: main
-    argocd-image-updater.argoproj.io/accounts.update-strategy: semver
-    argocd-image-updater.argoproj.io/cards.update-strategy: semver
-    argocd-image-updater.argoproj.io/loans.update-strategy: semver
-    argocd-image-updater.argoproj.io/gatewayserver.update-strategy: semver
+
 spec:
   project: banking-dev-project
   
@@ -25,6 +14,7 @@ spec:
     helm:
       valueFiles:
         - values.yaml
+        - image-tags.yaml
   
   destination:
     server: https://kubernetes.default.svc

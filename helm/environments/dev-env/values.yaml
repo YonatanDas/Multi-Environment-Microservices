@@ -24,8 +24,7 @@ accounts:
     name: accounts-sa
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::063630846340:role/dev-accounts-rds-access-role
-  image:
-    tag: 10
+
   replicaCount: 1
   secretName: dev-db-credentials
 
@@ -35,8 +34,7 @@ cards:
     name: cards-sa
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::063630846340:role/dev-cards-rds-access-role
-  image:
-    tag: 10
+
   replicaCount: 1
   secretName: dev-db-credentials
 
@@ -46,8 +44,7 @@ loans:
     name: loans-sa
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::063630846340:role/dev-loans-rds-access-role
-  image:
-    tag: 10
+
   replicaCount: 1
   secretName: dev-db-credentials
 
@@ -55,8 +52,7 @@ gateway:
   serviceAccount:
     create: true
     name: gateway-sa
-  image:
-    tag: 10
+
   replicaCount: 1
   secretName: dev-db-credentials
   service:
