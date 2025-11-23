@@ -31,10 +31,26 @@ module "external_secrets_role" {
   ]
 }
 
+module "argocd_image_updater_role" {
+  source            = "../../modules/iam/argocd_image_updater_role"
+  env               = var.environment
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+  ecr_repository_arns = [
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/accounts",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/cards",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/loans",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/gatewayserver"
+  ]
+}
+
 module "github_oidc" {
   source = "./github_oidc"
 }
 
 module "alb_controller_role" {
-  source = "./alb_controller_role"
+  source            = "./alb_controller_role"
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+  cluster_name      = module.eks.cluster_name
 }

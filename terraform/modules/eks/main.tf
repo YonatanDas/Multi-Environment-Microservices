@@ -190,3 +190,82 @@ resource "helm_release" "argocd" {
   timeout         = 600
   wait_for_jobs   = false
 }
+
+##########################################
+# ConfigMap for Image Updater Registry Configuration
+##########################################
+resource "kubernetes_config_map" "argocd_image_updater_registries" {
+  metadata {
+    name      = "argocd-image-updater-config"
+    namespace = kubernetes_namespace.argocd.metadata[0].name
+  }
+
+  data = {
+    "registries.conf" = <<-EOT
+      registries:
+      - name: ECR
+        api_url: https://063630846340.dkr.ecr.us-east-1.amazonaws.com
+        prefix: 063630846340.dkr.ecr.us-east-1.amazonaws.com
+        credstype: ecr
+        region: us-east-1
+    EOT
+  }
+
+  depends_on = [
+    kubernetes_namespace.argocd
+  ]
+}
+
+##########################################
+# ServiceAccount for Argo CD Image Updater with IRSA
+##########################################
+resource "kubernetes_service_account" "argocd_image_updater" {
+  metadata {
+    name      = "argocd-image-updater"
+    namespace = kubernetes_namespace.argocd.metadata[0].name
+    annotations = {
+      "eks.amazonaws.com/role-arn" = var.argocd_image_updater_role_arn
+    }
+  }
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_iam_openid_connect_provider.eks
+  ]
+}
+
+##########################################
+# Helm Release: Argo CD Image Updater
+##########################################
+resource "helm_release" "argocd_image_updater" {
+  name       = "argocd-image-updater"
+  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-image-updater"
+  version    = "0.9.0"
+
+  set = [
+    {
+      name  = "serviceAccount.create"
+      value = "false"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = kubernetes_service_account.argocd_image_updater.metadata[0].name
+    }
+  ]
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_eks_node_group.default,
+    aws_iam_openid_connect_provider.eks,
+    helm_release.argocd,
+    kubernetes_service_account.argocd_image_updater
+  ]
+
+  atomic          = true
+  cleanup_on_fail = true
+  wait            = true
+  timeout         = 600
+  wait_for_jobs   = false
+}

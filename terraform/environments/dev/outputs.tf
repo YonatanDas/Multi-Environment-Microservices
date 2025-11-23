@@ -55,3 +55,4 @@ output "eso_role_arn" {
   description = "IAM Role ARN for External Secrets Operator"
   value       = module.external_secrets_role.eso_role_arn
 }
+

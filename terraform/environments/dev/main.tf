@@ -51,9 +51,10 @@ module "eks" {
   public_subnets  = module.vpc.public_subnets
 
   # IAM
-  cluster_role_arn        = module.iam_cluster_role.eks_cluster_role_arn
-  alb_controller_role_arn = module.alb_controller_role.alb_controller
-  node_role_arn           = module.iam_node_role.eks_node_role_arn
+  cluster_role_arn              = module.iam_cluster_role.eks_cluster_role_arn
+  alb_controller_role_arn       = module.alb_controller_role.alb_controller
+  node_role_arn                 = module.iam_node_role.eks_node_role_arn
+  argocd_image_updater_role_arn = module.argocd_image_updater_role.image_updater_role_arn
 
   # node group settings
   node_instance_type    = var.node_instance_type
@@ -140,6 +141,22 @@ module "external_secrets_role" {
   ]
 }
 
+############################################
+# Argo CD Image Updater IAM Role
+############################################
+module "argocd_image_updater_role" {
+  source            = "../../modules/iam/argocd_image_updater_role"
+  env               = var.environment
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+  ecr_repository_arns = [
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/accounts",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/cards",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/loans",
+    "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/gatewayserver"
+  ]
+}
+
 # GitHub OIDC Module
 ############################################
 
@@ -156,3 +173,4 @@ module "alb_controller_role" {
   oidc_provider_url = module.eks.oidc_provider_url
   cluster_name      = var.cluster_name
 }
+

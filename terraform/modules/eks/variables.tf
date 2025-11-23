@@ -80,3 +80,9 @@ variable "alb_controller_role_arn" {
   type        = string
   default     = ""
 }
+
+variable "argocd_image_updater_role_arn" {
+  description = "IAM Role ARN for Argo CD Image Updater (IRSA)"
+  type        = string
+  default     = ""
+}

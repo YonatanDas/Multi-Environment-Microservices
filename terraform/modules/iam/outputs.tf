@@ -27,3 +27,8 @@ output "github_actions_terraform_role_arn" {
 output "alb_controller" {
   value = aws_iam_role.alb_controller.arn
 }
+
+output "argocd_image_updater_role_arn" {
+  description = "IAM Role ARN for Argo CD Image Updater"
+  value       = module.argocd_image_updater_role.image_updater_role_arn
+}
