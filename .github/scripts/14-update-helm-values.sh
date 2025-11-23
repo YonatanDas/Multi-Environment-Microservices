@@ -26,30 +26,9 @@ TAGS_FILE="helm/environments/${ENVIRONMENT}-env/image-tags.yaml"
 
 echo "🔄 Updating ${HELM_SERVICE}.image.tag to ${IMAGE_TAG} in ${TAGS_FILE}"
 
-# Check if file exists, create if not
-if [[ ! -f "${TAGS_FILE}" ]]; then
-  echo "📝 Creating ${TAGS_FILE}..."
-  mkdir -p "$(dirname "${TAGS_FILE}")"
-  cat > "${TAGS_FILE}" <<EOF
-accounts:
-  image:
-    tag: 10
-cards:
-  image:
-    tag: 10
-loans:
-  image:
-    tag: 10
-gateway:
-  image:
-    tag: 10
-EOF
-fi
-
 echo "📦 Installing yq..."
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
-
 
 # Update the tag
 yq eval ".${HELM_SERVICE}.image.tag = \"${IMAGE_TAG}\"" -i "${TAGS_FILE}"
