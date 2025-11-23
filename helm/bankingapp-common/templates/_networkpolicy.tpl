@@ -39,7 +39,6 @@ spec:
       - protocol: TCP
         port: {{ index $.Values.networkpolicy.targetPorts $svc }}
   {{- end }}
-<<<<<<< HEAD
   {{- end }}
 
   egress:
@@ -55,19 +54,6 @@ spec:
           port: {{ index $.Values.networkpolicy.targetPorts $svc }}
     {{- end }}
     {{- end }}
-=======
-  egress:
-    # Allow calling sibling microservices
-    - to:
-        {{- range .Values.networkpolicy.allowToServices }}
-        - podSelector:
-            matchLabels:
-              app: {{ . }}
-        {{- end }}
-      ports:
-        - protocol: TCP
-          port: {{ .Values.servicePort }}
->>>>>>> 4e9b5a8d2e4c6f27ae7a4764892d454536d185fd
 
     # Allow DNS + external APIs + External Secrets Operator
     - to:
