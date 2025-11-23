@@ -1,4 +1,7 @@
 dependencies:
+- name: bankingapp-common
+  repository: file://../../bankingapp-common
+  version: 0.1.0
 - name: accounts
   repository: file://../../bankingapp-services/accounts
   version: 0.1.0
@@ -11,5 +14,5 @@ dependencies:
 - name: gateway
   repository: file://../../bankingapp-services/gateway
   version: 0.1.0
-digest: sha256:569fc050197ad7a40067348624cd2e0a95cb4a3c3e6ba4e28acf431fa99d7bec
-generated: "2025-10-28T02:08:00.8330932+02:00"
+digest: sha256:26a7fd2488c7f28ede033f8a2bc9ec478637343adc7a2f33d20df787f044973c
+generated: "2025-11-23T02:35:16.6311595+02:00"
