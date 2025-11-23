@@ -66,8 +66,10 @@ git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 
 
-# Check if there are changes
-if git diff --quiet "${TAGS_FILE}"; then
+# Check if there are changes (compare against HEAD, handles both tracked and untracked files)
+if git status --porcelain "${TAGS_FILE}" | grep -q .; then
+  echo "📝 Changes detected, proceeding with commit"
+else
   echo "ℹ️  No changes to commit (tag already set to ${IMAGE_TAG})"
   exit 0
 fi
