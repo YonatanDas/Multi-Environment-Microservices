@@ -64,6 +64,8 @@ This simulates how a real company would **modernize a legacy service into a secu
 ---
 
 ## 2. Before vs After Architecture
+    Before Architecture:
+<img width="1596" height="1937" alt="image" src="https://github.com/user-attachments/assets/1a25784c-f114-44b1-92b2-a6387669354a" />
 
 ### 2.1 Legacy Architecture (Before)
 
@@ -148,55 +150,13 @@ This simulates how a real company would **modernize a legacy service into a secu
 
 ## 3. Cloud Architecture Diagram
 
+<img width="1848" height="2191" alt="image" src="https://github.com/user-attachments/assets/41e18c8d-a6a7-4ce7-8a64-4344c869783c" />
 
-```mermaid
-flowchart LR
-  subgraph CICD["GitHub Actions"]
-    CI[Microservices CI]
-    TF[Terraform Workflows]
-  end
-  subgraph AWS["AWS Account"]
-    IAM[(IAM OIDC Roles)]
-    VPC[VPC + public/private subnets]
-    EKS[EKS Control Plane]
-    NG[Managed Node Groups]
-    ALB[AWS Load Balancer Controller]
-    RDS[(Amazon RDS Postgres)]
-    SM[AWS Secrets Manager]
-    ECR[ECR repos per service]
-    Argo[Argo CD]
-    ESO[External Secrets Operator]
-  end
-  CI -->|push images| ECR
-  CI -->|assume role| IAM
-  TF -->|OIDC| IAM
-  IAM --> TF
-  TF --> VPC & EKS & NG & ALB & RDS & SM & Argo & ESO
-  Argo -->|sync Helm env charts| EKS
-  ESO -->|inject secrets| EKS
-  ECR -->|pull images| NG
-  ALB -->|HTTP 80| Gateway
-  Gateway --> Accounts & Cards & Loans
-  RDS -->|JDBC| Accounts & Cards & Loans
-```
 
 ## 4. Kubernetes Architecture Diagram
 
-```mermaid
-flowchart TD
-  ALB[ALB Ingress] --> Gtw[Gateway Server 8072]
-  Gtw --> Acc[Accounts 8080]
-  Gtw --> Crd[Cards 9000]
-  Gtw --> Lon[Loans 8090]
-  Cfg[ConfigMap + OTEL placeholders] --> Acc & Crd & Lon
-  ESO[(ExternalSecret dev-db-credentials)] --> Sec[K8s Secret]
-  Sec --> Acc & Crd & Lon
-  HPA1[HPA 2-6 pods<br/>cpu/mem 70%] --> Acc
-  HPA2 --> Crd
-  HPA3 --> Lon
-  Netpol[NetworkPolicies<br/>gateway-only ingress,<br/>egress DNS+443] --> Acc & Crd & Lon
-  Obs[Actuator /metrics /health] --> PromStack[(Prom/Grafana collector)]
-```
+<img width="2064" height="1535" alt="image" src="https://github.com/user-attachments/assets/e5e69c13-7533-491b-a494-8a4a8590df01" />
+
 
 ## 5. Repository & Directory Structure
 
@@ -220,30 +180,20 @@ Multi-Environment-Microservices/
 ## 6. CI/CD Flow
 
 - **Microservices pipeline (`.github/workflows/Microservice-Ci.yaml`):** dorny path-filter chooses changed services, runs Maven lint/tests, executes Trivy FS scans, builds multi-arch images with Buildx, pushes to ECR using GitHub OIDC, performs Trivy image + SBOM scans, Cosign signs and verifies images, and uploads every artifact (tests, scans, SBOM, build metadata) to S3.
+<img width="2774" height="1725" alt="image" src="https://github.com/user-attachments/assets/95f52ad2-e40c-4f64-ae4d-c6e16c49c75f" />
+
 - **Terraform guardrails:** `terraform-validate` workflow enforces `terraform fmt`, multi-env `terraform validate`, and parallel Checkov + tfsec scans before artifacts are archived. `terraform-plan` produces per-environment binary/text/JSON plans and stores them for manual review. `terraform-apply` reuses signed plans, enforces branch protections, and tags prod deployments.
+<img width="2166" height="1684" alt="image" src="https://github.com/user-attachments/assets/b7cf60f8-7dfc-40fc-968f-07a12347083d" />
+
 - **Observability hooks:** every Spring service exposes `/actuator/health/*` and `/actuator/prometheus`, so probes + Prometheus scrapers can reuse the same endpoints. OTEL exporters are parameterized in `helm/environments/*/values.yaml`.
 - **Artifact integrity:** GitHub Actions writes SBOMs, Trivy reports, Terraform plans, and apply logs to S3 (`my-ci-artifacts55`) for auditability.
+  <img width="2289" height="1256" alt="image" src="https://github.com/user-attachments/assets/ffdad273-a831-4be5-8b1c-4116df1e67c8" />
+
 
 ## 7. IRSA Authentication Flow
 
-```mermaid
-sequenceDiagram
-  participant Pod as Spring Pod
-  participant SA as ServiceAccount (accounts-sa/cards-sa/loans-sa)
-  participant OIDC as EKS OIDC Provider
-  participant IAM as IAM Role (dev-*-rds-access-role)
-  participant ESO as External Secrets Operator
-  participant ASM as AWS Secrets Manager (dev-db-credentials)
-  participant K8sSecret as Kubernetes Secret
-  Pod->>SA: needs DB_USER/DB_PASSWORD/HOST/DB_NAME
-  SA->>OIDC: present signed service account token
-  OIDC->>IAM: sts:AssumeRoleWithWebIdentity
-  IAM-->>ESO: scoped temp creds (GetSecretValue)
-  ESO->>ASM: fetch dev-db-credentials JSON
-  ASM-->>ESO: username/password/dbhost/dbname
-  ESO->>K8sSecret: render Kubernetes Secret
-  K8sSecret-->>Pod: envFrom injection at deploy time
-```
+<img width="2064" height="1535" alt="image" src="https://github.com/user-attachments/assets/1dadeb65-1226-4940-9a80-08ec80f41d62" />
+
 
 ## 8. NetworkPolicy Model
 
