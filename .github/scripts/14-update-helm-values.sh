@@ -5,7 +5,7 @@ trim() { awk '{$1=$1;print}'; }
 
 SERVICE="$(printf '%s' "${1-}" | trim)"
 IMAGE_TAG="$(printf '%s' "${2-}" | trim)"
-ENVIRONMENT="${3:-dev}"
+ENVIRONMENT="$(printf '%s' "${3:-dev}" | trim)"
 
 if [[ -z "${SERVICE}" || -z "${IMAGE_TAG}" ]]; then
   echo "❌ Usage: $0 <SERVICE> <IMAGE_TAG> [ENVIRONMENT]" >&2
