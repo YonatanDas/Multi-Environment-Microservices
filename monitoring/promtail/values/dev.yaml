@@ -8,13 +8,26 @@ promtail:
         - job_name: kubernetes-pods
           kubernetes_sd_configs:
             - role: pod
+          pipeline_stages:
+            - docker: {}
           relabel_configs:
+            # Extract path from Kubernetes metadata
+            - source_labels:
+                - __meta_kubernetes_pod_node_name
+                - __meta_kubernetes_pod_uid
+                - __meta_kubernetes_pod_container_name
+              separator: '/'
+              target_label: __path__
+              replacement: /var/log/pods/*$1/*/*.log
+            # Add labels
             - source_labels: [__meta_kubernetes_namespace]
               target_label: namespace
             - source_labels: [__meta_kubernetes_pod_name]
               target_label: pod
-            - source_labels: [__meta_kubernetes_pod_label_app]
-              target_label: app
             - source_labels: [__meta_kubernetes_pod_container_name]
               target_label: container
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+              target_label: app
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              target_label: app
 
