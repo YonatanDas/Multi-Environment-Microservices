@@ -1,12 +1,11 @@
 opentelemetry-collector:
-  mode: daemonset
+  mode: deployment  # Changed from daemonset
   
   image:
     repository: otel/opentelemetry-collector-contrib
     tag: "0.95.0"
   
-  # Explicitly override defaults - ensure no file: key
-  config:
+  config: 
     exporters:
       prometheusremotewrite:
         endpoint: http://kube-prometheus-stack-prometheus:9090/api/v1/write
