@@ -41,3 +41,13 @@ resources:
 networkpolicy:
   denyAllIngress: true
   denyAllEgress: true
+
+# ========== MONITORING CONFIGURATION ==========
+monitoring:
+  enabled: true
+  otel:
+    enabled: false  # Enable per environment in environment values.yaml
+    agentVersion: "1.32.0"  # OpenTelemetry Java Agent version
+  metricsPath: "/actuator/prometheus"
+  scrapeInterval: "30s"
+# ========== END MONITORING ==========

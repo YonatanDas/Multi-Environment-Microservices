@@ -19,12 +19,53 @@ spec:
         app: {{ .Values.appLabel }}
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
+      
+      # ========== INIT CONTAINER: Download OTEL Agent ==========
+      {{- if .Values.monitoring.otel.enabled }}
+      initContainers:
+        - name: download-otel-agent
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Downloading OpenTelemetry Java Agent v{{ .Values.monitoring.otel.agentVersion }}..."
+              curl -L -f -o /shared/opentelemetry-javaagent.jar \
+                https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v{{ .Values.monitoring.otel.agentVersion }}/opentelemetry-javaagent.jar
+              if [ $? -eq 0 ]; then
+                echo "✅ OTEL agent downloaded successfully"
+                ls -lh /shared/opentelemetry-javaagent.jar
+              else
+                echo "❌ Failed to download OTEL agent"
+                exit 1
+              fi
+          volumeMounts:
+            - name: otel-agent
+              mountPath: /shared
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      {{- end }}
+      # ========== END INIT CONTAINER ==========
+      
       containers:
         - name: {{ .Values.appLabel }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {{ .Values.containerPort }}
+
+          # ========== MOUNT OTEL AGENT VOLUME ==========
+          {{- if .Values.monitoring.otel.enabled }}
+          volumeMounts:
+            - name: otel-agent
+              mountPath: /app/otel
+          {{- end }}
+          # ========== END VOLUME MOUNT ==========
 
           # ---------- ENV VARS ----------
           env:
@@ -35,10 +76,27 @@ spec:
             - name: build.version
               value: {{ .Values.image.tag | default "1.0.0" | quote }}
 
-          {{- if and .Values.secretName }}
+            {{- if and .Values.secretName }}
             - name: DB_SECRET_NAME
               value: {{ .Values.secretName | quote }}
-          {{- end }}
+            {{- end }}
+
+            # ========== OTEL ENVIRONMENT VARIABLES ==========
+            {{- if .Values.monitoring.otel.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.appLabel | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otelExporterEndpoint | default "http://opentelemetry-collector.monitoring.svc.cluster.local:4317" | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name={{ .Values.appLabel }},deployment.environment={{ .Values.global.environment }}"
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.global.otelMetricsExporter | default "otlp" | quote }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.global.otelLogsExporter | default "none" | quote }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/app/otel/opentelemetry-javaagent.jar"
+            {{- end }}
+            # ========== END OTEL ENV VARS ==========
 
           # ---------- CONFIG + SECRETS ----------
           envFrom:
@@ -73,4 +131,12 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
+
+      # ========== OTEL AGENT VOLUME ==========
+      {{- if .Values.monitoring.otel.enabled }}
+      volumes:
+        - name: otel-agent
+          emptyDir: {}
+      {{- end }}
+      # ========== END VOLUME ==========
 {{- end -}}

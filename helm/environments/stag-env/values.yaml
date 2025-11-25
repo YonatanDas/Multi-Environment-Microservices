@@ -4,8 +4,8 @@ global:
     region: us-east-1
   springProfile: stag
   javaToolOptions: ""
-  otelExporterEndpoint: ""
-  otelMetricsExporter: none
+  otelExporterEndpoint: "http://opentelemetry-collector.monitoring.svc.cluster.local:4317"
+  otelMetricsExporter: otlp
   otelLogsExporter: none
   
   
@@ -28,6 +28,10 @@ accounts:
     tag: v1.0.0
   replicaCount: 1
   secretName: stag-db-credentials
+  
+  monitoring:
+    otel:
+      enabled: true
 
 cards:
   serviceAccount:
@@ -38,6 +42,10 @@ cards:
     tag: v1.0.0
   replicaCount: 1
   secretName: stag-db-credentials
+  
+  monitoring:
+    otel:
+      enabled: true
 
 loans:
   serviceAccount:
@@ -48,6 +56,10 @@ loans:
     tag: v1.0.0
   replicaCount: 1
   secretName: stag-db-credentials
+  
+  monitoring:
+    otel:
+      enabled: true
 
 gateway:
   serviceAccount:
@@ -59,3 +71,7 @@ gateway:
   secretName: stag-db-credentials
   service:
     type: LoadBalancer
+  
+  monitoring:
+    otel:
+      enabled: true

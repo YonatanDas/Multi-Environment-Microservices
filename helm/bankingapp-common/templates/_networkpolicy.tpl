@@ -41,6 +41,16 @@ spec:
   {{- end }}
   {{- end }}
 
+  # ========== ADD THIS: Allow Prometheus scraping ==========
+  - from:
+      - namespaceSelector:
+          matchLabels:
+            name: monitoring
+    ports:
+      - protocol: TCP
+        port: {{ .Values.containerPort }}
+  # ========== END ==========
+
   egress:
     # Allow calling sibling microservices
     {{- if .Values.networkpolicy.allowToServices }}
@@ -54,6 +64,20 @@ spec:
           port: {{ index $.Values.networkpolicy.targetPorts $svc }}
     {{- end }}
     {{- end }}
+
+    # ========== ADD THIS: Allow egress to monitoring ==========
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 4317  # OTLP gRPC
+        - protocol: TCP
+          port: 4318  # OTLP HTTP
+        - protocol: TCP
+          port: 3100  # Loki
+    # ========== END ==========
 
     # Allow DNS + external APIs + External Secrets Operator
     - to:

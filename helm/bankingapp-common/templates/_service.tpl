@@ -5,6 +5,10 @@ metadata:
   name: {{ .Values.serviceName }}
   labels:
     app: {{ .Values.appLabel }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.containerPort }}"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
   type: {{ .Values.service.type | default "ClusterIP" }}
   selector:
@@ -13,4 +17,5 @@ spec:
     - port: {{ .Values.servicePort }}
       targetPort: {{ .Values.containerPort }}
       protocol: TCP
+      name: http
 {{- end -}}
