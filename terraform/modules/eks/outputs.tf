@@ -41,3 +41,13 @@ output "node_sg_id" {
   description = "Security Group ID of worker nodes"
   value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
 }
+
+output "prometheus_service_endpoint" {
+  description = "Prometheus service endpoint"
+  value       = "kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+}
+
+output "grafana_service_endpoint" {
+  description = "Grafana service endpoint"
+  value       = "kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80"
+}

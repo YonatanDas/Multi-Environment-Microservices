@@ -1,7 +1,6 @@
 # Multi-Environment Banking Platform
 
 [![Microservices CI](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/Microservice-Ci.yaml/badge.svg?branch=main)](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/Microservice-Ci.yaml)
-[![Terraform Validate](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/terraform-validate.yaml/badge.svg?branch=main)](https://github.com/yonatandas/Multi-Environment-Microservices/actions/workflows/terraform-validate.yaml)
 ![Terraform](https://img.shields.io/badge/IaC-Terraform-844FBA?logo=terraform)
 ![Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5?logo=kubernetes)
 ![AWS](https://img.shields.io/badge/Cloud-AWS-FF9900?logo=amazonaws)

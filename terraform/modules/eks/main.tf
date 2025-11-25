@@ -258,6 +258,27 @@ resource "helm_release" "kyverno" {
     name  = "resources.requests.memory"
     value = "128Mi"
   }
+  
+  set {
+    name  = "cleanupController.enabled"
+    value = "false"  # Disable cleanup controller (includes cleanup jobs)
+  }
+
+  set {
+    name  = "cleanupController.admissionReports.enabled"
+    value = "false"
+  }
+
+  set {
+    name  = "cleanupController.clusterAdmissionReports.enabled"
+    value = "false"
+  }
+
+  # Increase webhook timeout to prevent ServiceMonitor creation timeouts
+  set {
+    name  = "admissionController.timeoutSeconds"
+    value = "30"
+  }
 
   depends_on = [
     aws_eks_cluster.this,
