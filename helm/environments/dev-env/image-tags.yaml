@@ -9,4 +9,4 @@ loans:
     tag: 22
 gateway:
   image:
-    tag: 22
+    tag: 23
