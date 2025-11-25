@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: exclude-monitoring-crds
+spec:
+  validationFailureAction: Audit
+  background: false
+  rules:
+    - name: skip-monitoring-crds
+      match:
+        resources:
+          kinds:
+            - ServiceMonitor
+            - PrometheusRule
+            - PodMonitor
+      # Always pass validation (empty pattern matches everything)
+      validate:
+        message: "Monitoring CRDs are excluded from validation"
+        pattern: {}
