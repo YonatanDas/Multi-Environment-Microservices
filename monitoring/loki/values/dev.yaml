@@ -1,13 +1,22 @@
 loki:
   auth_enabled: false
   
-  # Use test schema for quick dev testing - bypasses schemaConfig requirement
-  useTestSchema: true
+  # Explicit schema_config as required by Grafana Loki Helm chart validation
+  # Per Grafana docs: schema_config is required for all Loki deployments
+  # This minimal config works with filesystem storage for dev
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
   
-  # Filesystem storage for dev (works with useTestSchema)
   storage:
     type: filesystem
-
+  
   persistence:
     enabled: false
 

@@ -11,6 +11,9 @@ kube-prometheus-stack:
       patch:
         enabled: false
       failurePolicy: Ignore
+    # CRITICAL: Disable TLS to prevent volume mount for missing secret
+    tls:
+      enabled: false
   
   prometheus:
     prometheusSpec:
