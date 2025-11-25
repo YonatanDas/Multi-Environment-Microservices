@@ -6,7 +6,7 @@ cards:
     tag: 22
 loans:
   image:
-    tag: 22
+    tag: 23
 gateway:
   image:
     tag: 23
