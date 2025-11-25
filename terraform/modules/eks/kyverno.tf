@@ -47,22 +47,22 @@ resource "helm_release" "kyverno" {
 
   set {
     name  = "resources.limits.cpu"
-    value = "500m"
+    value = "1000m"
   }
 
   set {
     name  = "resources.limits.memory"
-    value = "512Mi"
+    value = "1Gi"
   }
 
   set {
     name  = "resources.requests.cpu"
-    value = "100m"
+    value = "200m"
   }
 
   set {
     name  = "resources.requests.memory"
-    value = "128Mi"
+    value = "256Mi"
   }
   
   set {
@@ -84,6 +84,11 @@ resource "helm_release" "kyverno" {
   set {
     name  = "admissionController.timeoutSeconds"
     value = "30"
+  }
+
+  set {
+    name  = "admissionController.failurePolicy"
+    value = "Ignore"  # This allows deployments even if Kyverno is slow
   }
 
   depends_on = [

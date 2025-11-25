@@ -40,7 +40,7 @@ kube-prometheus-stack:
         datasources:
           - name: Prometheus
             type: prometheus
-            url: http://kube-prometheus-stack-prometheus:9090
+            url: http://prometheus-operator-dev-ku-prometheus:9090
             isDefault: true
           - name: Loki
             type: loki
