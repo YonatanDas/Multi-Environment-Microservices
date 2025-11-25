@@ -1,10 +1,13 @@
 ##########################################
-# Prometheus Operator via Helm
+# Monitoring Namespace
 ##########################################
-resource "random_password" "grafana_admin" {
-  length           = 24
-  special          = true
-  override_special = "_%-!#$&*+-=<>?^~"
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+  timeouts {
+    delete = "5m"
+  }
 }
 
 ##########################################
@@ -13,12 +16,13 @@ resource "random_password" "grafana_admin" {
 
 resource "helm_release" "prometheus_operator" {
   name       = "kube-prometheus-stack"
-  namespace  = "monitoring"
+  namespace = kubernetes_namespace.monitoring.metadata[0].name
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   version    = "55.0.0"
 
-  create_namespace = true
+
+  create_namespace = false
 
   values = [
     yamlencode({
