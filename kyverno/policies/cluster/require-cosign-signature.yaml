@@ -37,7 +37,7 @@ spec:
                 - keyless:
                     # Match GitHub Actions workflow from this repository
                     # Subject format: https://github.com/<org>/<repo>/.github/workflows/<workflow>@refs/heads/<branch>
-                    subject: "https://github.com/yonatanDas/Multi-Environment-Microservices/.github/workflows/Microservice-Ci.yaml@refs/heads/main"
+                    subject: "https://github.com/YonatanDas/Banking-Microservices-Platform/.github/workflows/Microservice-Ci.yaml@refs/heads/main"
                     issuer: "https://token.actions.githubusercontent.com"
                     rekor:
                       url: https://rekor.sigstore.dev
@@ -49,3 +49,4 @@ spec:
                 - kyverno
                 - argocd
                 - external-secrets
+                - monitoring

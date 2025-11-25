@@ -28,7 +28,7 @@ kyverno/
 **Key Features**:
 - Validates images from ECR registry: `063630846340.dkr.ecr.us-east-1.amazonaws.com/*`
 - Uses keyless signing with certificate identity from GitHub Actions workflows
-- Verifies certificate identity matches: `https://github.com/yonatandas/Multi-Environment-Microservices/.github/workflows/*`
+- Verifies certificate identity matches: `https://github.com/YonatanDas/Banking-Microservices-Platform/.github/workflows/*`
 - Verifies OIDC issuer: `https://token.actions.githubusercontent.com`
 - Mutates image references to use digest for immutability
 
@@ -237,7 +237,7 @@ When a policy blocks a deployment:
 
 **Solution**:
 - Ensure images are signed in GitHub Actions workflow
-- Verify certificate identity matches: `https://github.com/yonatandas/Multi-Environment-Microservices/.github/workflows/*`
+- Verify certificate identity matches: `https://github.com/YonatanDas/Banking-Microservices-Platform/.github/workflows/*`
 - Check Cosign signing script: `.github/scripts/06-cosign-sign-verify.sh`
 
 #### 2. Image Tag Validation Fails
