@@ -16,9 +16,9 @@ spec:
     namespace: monitoring
   
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+    automated: null  # Disable auto-sync
+    # prune: true
+    # selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
 
