@@ -65,3 +65,13 @@ output "github_actions_role_arn" {
   description = "IAM Role ARN for GitHub Actions"
   value       = module.github_oidc.github_actions_role_arn
 }
+
+output "loki_s3_bucket_name" {
+  description = "S3 bucket name for Loki storage"
+  value       = module.monitoring.loki_s3_bucket_name
+}
+
+output "loki_iam_role_arn" {
+  description = "IAM role ARN for Loki S3 access"
+  value       = module.monitoring.loki_iam_role_arn
+}

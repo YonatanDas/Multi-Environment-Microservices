@@ -174,3 +174,16 @@ module "alb_controller_role" {
   cluster_name      = var.cluster_name
 }
 
+############################################
+# Monitoring Infrastructure
+############################################
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  environment              = var.environment
+  eks_oidc_provider_arn    = module.eks.oidc_provider_arn
+  eks_oidc_provider_url    = module.eks.oidc_provider_url
+  region                   = var.aws_region
+  aws_account_id           = var.aws_account_id
+}
+

@@ -56,3 +56,18 @@ output "eso_role_arn" {
   value       = module.external_secrets_role.eso_role_arn
 }
 
+output "loki_s3_bucket_name" {
+  description = "S3 bucket name for Loki storage"
+  value       = module.monitoring.loki_s3_bucket_name
+}
+
+output "loki_iam_role_arn" {
+  description = "IAM role ARN for Loki S3 access"
+  value       = module.monitoring.loki_iam_role_arn
+}
+
+output "grafana_admin_password" {
+  description = "Grafana admin password"
+  value       = module.eks.grafana_admin_password
+  sensitive   = true
+}

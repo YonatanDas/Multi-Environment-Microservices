@@ -55,3 +55,13 @@ output "eso_role_arn" {
   description = "IAM Role ARN for External Secrets Operator"
   value       = module.external_secrets_role.eso_role_arn
 }
+
+output "loki_s3_bucket_name" {
+  description = "S3 bucket name for Loki storage"
+  value       = module.monitoring.loki_s3_bucket_name
+}
+
+output "loki_iam_role_arn" {
+  description = "IAM role ARN for Loki S3 access"
+  value       = module.monitoring.loki_iam_role_arn
+}
