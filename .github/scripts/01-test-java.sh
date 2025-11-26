@@ -10,11 +10,7 @@ echo "📁 Full path: $ROOT_DIR/$SERVICE_DIR"
 
 cd "$ROOT_DIR/$SERVICE_DIR" || { echo "❌ Directory not found: $ROOT_DIR/$SERVICE_DIR"; exit 1; }
 
-# --------------------------
-# Skip checkstyle (optional)
-# --------------------------
-# If you only want to see CI run even with violations, add -Dcheckstyle.skip=true
-# or comment out if you want full enforcement
+# Skip checkstyle
 mvn -B clean verify -Dcheckstyle.skip=true || true
 
 

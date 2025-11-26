@@ -31,7 +31,7 @@ git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git config pull.rebase true
 
-# Install yq (do this early)
+# Install yq
 echo "📦 Installing yq..."
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
@@ -118,7 +118,7 @@ while true; do
   
   if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
     echo "❌ Failed to push changes after $MAX_RETRIES retries." >&2
-    echo "💡 This usually means another job updated the file. The change will be picked up in the next run." >&2
+    echo "💡 Another job may have updated the file. Change will be picked up in the next run." >&2
     exit 1
   fi
   

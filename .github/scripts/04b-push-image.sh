@@ -21,7 +21,7 @@ REMOTE_IMAGE="${REGISTRY}/${SERVICE}:${IMAGE_TAG}"
 echo "🔎 Debug (local images matching '${SERVICE}')"
 docker images --format '{{.Repository}}:{{.Tag}}' | grep -E "^${SERVICE}:" || true
 
-# Ensure the local image exists (built with --load in 04a-build-image.sh)
+# Verify local image exists
 if ! docker image inspect "${LOCAL_IMAGE}" >/dev/null 2>&1; then
   echo "❌ Local image '${LOCAL_IMAGE}' not found. Did you build with --load?" >&2
   exit 1

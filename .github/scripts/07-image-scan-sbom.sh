@@ -39,7 +39,7 @@ trivy image \
 
 echo "✅ Trivy scan completed. Reports saved in: ${OUTPUT_DIR}"
 
-# 4. Optional → Fail pipeline on CRITICAL vulns
+# Fail pipeline on CRITICAL vulns if enabled
 if [[ "${FAIL_ON_CRITICAL}" == "true" ]]; then
     if jq '.Results[].Vulnerabilities | map(select(.Severity == "CRITICAL")) | length' "${OUTPUT_DIR}/vuln-report.json" | grep -q '[1-9]'; then
         echo "❌ Critical vulnerabilities found! Failing job."

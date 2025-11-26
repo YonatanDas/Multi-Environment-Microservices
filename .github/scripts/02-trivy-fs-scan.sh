@@ -12,18 +12,18 @@ if [ ! -d "$TARGET_PATH" ]; then
   exit 1
 fi
 
-# 🧹 Clean broken symlinks or unreadable files before scanning
+# Clean broken symlinks or unreadable files before scanning
 echo "🧹 Cleaning up broken symlinks and unreadable files..."
 find "$TARGET_PATH" -xtype l -delete || true
 find "$TARGET_PATH" ! -readable -exec rm -f {} \; 2>/dev/null || true
 
-# 🚫 Optional: skip scanning huge target/ folders if you’re not interested in them
+# Skip Maven target directory
 if [ -d "$TARGET_PATH/target" ]; then
   echo "🧹 Skipping Maven target directory from scan..."
   rm -rf "$TARGET_PATH/target"
 fi
 
-# ⚙️ Run Trivy FS scan (real scan, not suppressed)
+# Run Trivy FS scan
 trivy fs "$TARGET_PATH" \
   --exit-code 0 \
   --ignore-unfixed \
