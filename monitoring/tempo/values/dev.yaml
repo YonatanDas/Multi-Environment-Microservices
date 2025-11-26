@@ -1,10 +1,10 @@
 tempo:
-  # Storage configuration - use local storage for dev
+  # Local storage for dev
   storage:
     trace:
       backend: local
   
-  # OTLP receiver configuration
+  # OTLP receiver
   distributor:
     receivers:
       otlp:
@@ -14,11 +14,11 @@ tempo:
           http:
             endpoint: 0.0.0.0:4318
   
-  # Query frontend for Grafana
+  # Query frontend
   queryFrontend:
     enabled: true
   
-  # Resource limits for dev environment
+  # Resource limits
   resources:
     requests:
       cpu: 100m
@@ -27,7 +27,7 @@ tempo:
       cpu: 500m
       memory: 512Mi
   
-  # Disable persistence in dev (ephemeral storage)
+  # Disable persistence
   persistence:
     enabled: false
 

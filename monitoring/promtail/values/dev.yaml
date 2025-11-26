@@ -3,7 +3,6 @@ promtail:
     clients:
       - url: http://loki-gateway:80/loki/api/v1/push
     
-    # Enable default Kubernetes pod scraping - the chart handles path construction automatically
     containerLogPaths:
       - /var/log/pods/*/*/*.log
     
@@ -15,12 +14,12 @@ promtail:
           pipeline_stages:
             - docker: {}
           relabel_configs:
-            # Only process running pods
+            # Filter running pods
             - action: keep
               source_labels:
                 - __meta_kubernetes_pod_phase
               regex: Running
-            # Construct log path: /var/log/pods/<namespace>_<pod_name>_<pod_uid>/<container_name>/*.log
+            # Construct log path
             - action: replace
               source_labels:
                 - __meta_kubernetes_namespace
@@ -35,19 +34,19 @@ promtail:
               target_label: __tmp_pod_path
               replacement: /var/log/pods/$1
             - action: replace
-              regex: (.+)/(.+)
+              regex: (.+)/(.+) 
               source_labels:
                 - __tmp_pod_path
                 - __meta_kubernetes_pod_container_name
               separator: /
               target_label: __path__
               replacement: $1/$2/*.log
-            # Drop if path wasn't constructed
+            # Drop invalid paths
             - action: drop
               regex: ''
               source_labels:
                 - __path__
-            # Add useful labels
+            # Add labels
             - source_labels: [__meta_kubernetes_namespace]
               target_label: namespace
             - source_labels: [__meta_kubernetes_pod_name]
@@ -60,7 +59,7 @@ promtail:
             - source_labels: [__meta_kubernetes_pod_label_app]
               target_label: app
               action: replace
-            # Clean up temporary label
+            # Remove temporary label
             - action: labeldrop
               regex: __tmp_pod_path
 

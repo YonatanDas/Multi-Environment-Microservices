@@ -1,9 +1,7 @@
 loki:
   auth_enabled: false
   
-  # Explicit schema_config as required by Grafana Loki Helm chart validation
-  # Per Grafana docs: schema_config is required for all Loki deployments
-  # This minimal config works with filesystem storage for dev
+  # Schema config required for Loki deployments
   schemaConfig:
     configs:
       - from: "2024-01-01"
