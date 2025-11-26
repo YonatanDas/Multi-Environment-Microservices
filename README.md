@@ -1,6 +1,27 @@
 # Multi-Environment Banking Platform on AWS EKS
 
 [![CI Status](https://github.com/YonatanDas/Banking-Microservices-Platform/actions/workflows/Microservice-Ci.yaml/badge.svg?branch=main)](https://github.com/YonatanDas/Banking-Microservices-Platform/actions/workflows/Microservice-Ci.yaml)
+## 🛠️ Technology Stack
+
+![Terraform](https://img.shields.io/badge/Terraform-1.6+-623CE4?style=flat-square&logo=terraform&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazon-aws&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
+![EKS](https://img.shields.io/badge/EKS-FF9900?style=flat-square&logo=amazon-aws&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Argo CD](https://img.shields.io/badge/Argo%20CD-EF7B4D?style=flat-square&logo=argo&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-0F1689?style=flat-square&logo=helm&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-1904DA?style=flat-square&logo=aqua-security&logoColor=white)
+![Cosign](https://img.shields.io/badge/Cosign-1E88E5?style=flat-square&logo=kubernetes&logoColor=white)
+![Checkov](https://img.shields.io/badge/Checkov-502DF2?style=flat-square&logo=bridgecrew&logoColor=white)
+![tfsec](https://img.shields.io/badge/tfsec-3C873A?style=flat-square&logo=terraform&logoColor=white)
+![ESO](https://img.shields.io/badge/ESO-4A90E2?style=flat-square&logo=kubernetes&logoColor=white)
+![Kyverno](https://img.shields.io/badge/Kyverno-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
+![Loki](https://img.shields.io/badge/Loki-F46800?style=flat-square&logo=grafana&logoColor=white)
+![Tempo](https://img.shields.io/badge/Tempo-F46800?style=flat-square&logo=grafana&logoColor=white)
+![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000000?style=flat-square&logo=opentelemetry&logoColor=white)
 
 > **Production-ready cloud-native platform** transforming a legacy Docker Compose application into a scalable, secure, multi-environment Kubernetes platform on AWS with full GitOps automation, security controls, and observability.
 
