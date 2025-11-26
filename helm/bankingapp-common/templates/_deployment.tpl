@@ -20,11 +20,17 @@ spec:
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       
-      # ========== INIT CONTAINER: Download OTEL Agent ==========
       {{- if .Values.monitoring.otel.enabled }}
       initContainers:
         - name: download-otel-agent
-          image: curlimages/curl:latest
+          image: curlimages/curl:8.5.0
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot | default true }}
+            runAsUser: {{ .Values.securityContext.runAsUser | default 1000 }}
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation | default false }}
+            capabilities:
+              drop:
+                - ALL
           command:
             - sh
             - -c
@@ -50,24 +56,27 @@ spec:
               cpu: 200m
               memory: 128Mi
       {{- end }}
-      # ========== END INIT CONTAINER ==========
       
       containers:
         - name: {{ .Values.appLabel }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot | default true }}
+            runAsUser: {{ .Values.securityContext.runAsUser | default 1000 }}
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation | default false }}
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: {{ .Values.containerPort }}
 
-          # ========== MOUNT OTEL AGENT VOLUME ==========
           {{- if .Values.monitoring.otel.enabled }}
           volumeMounts:
             - name: otel-agent
               mountPath: /app/otel
           {{- end }}
-          # ========== END VOLUME MOUNT ==========
 
-          # ---------- ENV VARS ----------
           env:
 
             - name: AWS_REGION
@@ -81,7 +90,6 @@ spec:
               value: {{ .Values.secretName | quote }}
             {{- end }}
 
-            # ========== OTEL ENVIRONMENT VARIABLES ==========
             {{- if .Values.monitoring.otel.enabled }}
             - name: OTEL_SERVICE_NAME
               value: {{ .Values.appLabel | quote }}
@@ -96,9 +104,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-javaagent:/app/otel/opentelemetry-javaagent.jar"
             {{- end }}
-            # ========== END OTEL ENV VARS ==========
 
-          # ---------- CONFIG + SECRETS ----------
           envFrom:
             - configMapRef:
                 name: {{ .Values.configMapName | default "bankingapp-config" }}
@@ -108,7 +114,6 @@ spec:
                 name: {{ .Values.secretName }}
           {{- end }}
 
-          # ---------- HEALTH CHECKS ----------
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.liveness.path }}
@@ -132,11 +137,9 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
 
-      # ========== OTEL AGENT VOLUME ==========
       {{- if .Values.monitoring.otel.enabled }}
       volumes:
         - name: otel-agent
           emptyDir: {}
       {{- end }}
-      # ========== END VOLUME ==========
 {{- end -}}

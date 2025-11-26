@@ -24,11 +24,15 @@ probes:
     path: /actuator/health/liveness
     initialDelaySeconds: 30
     periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   readiness:
     path: /actuator/health/readiness
     initialDelaySeconds: 10
     periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
 
 resources:
   requests:
@@ -42,7 +46,19 @@ networkpolicy:
   denyAllIngress: true
   denyAllEgress: true
 
-# ========== MONITORING CONFIGURATION ==========
+# Pod Disruption Budget configuration
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1  # Minimum number of pods that must be available during disruptions
+  # Alternative: maxUnavailable: 1  # Maximum number of pods that can be unavailable
+
+# Security context configuration
+securityContext:
+  runAsUser: 1000  # Default user ID, can be overridden per service
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+
+# Monitoring configuration
 monitoring:
   enabled: true
   otel:
@@ -50,4 +66,3 @@ monitoring:
     agentVersion: "1.32.0"  # OpenTelemetry Java Agent version
   metricsPath: "/actuator/prometheus"
   scrapeInterval: "30s"
-# ========== END MONITORING ==========

@@ -17,10 +17,8 @@ spec:
 
   ingress:
   {{- if eq .Chart.Name "gateway" }}
-  # Gateway: Allow traffic from anywhere (ALB/Ingress Controller)
   - {}
   {{- else }}
-  # Allow traffic from gateway → this service
   - from:
       - podSelector:
           matchLabels:
@@ -29,7 +27,6 @@ spec:
       - protocol: TCP
         port: {{ .Values.servicePort }}
 
-  # Allow traffic from sibling microservices
   {{- range $svc := .Values.networkpolicy.allowFromServices }}
   - from:
       - podSelector:
@@ -41,7 +38,6 @@ spec:
   {{- end }}
   {{- end }}
 
-  # ========== ADD THIS: Allow Prometheus scraping ==========
   - from:
       - namespaceSelector:
           matchLabels:
@@ -49,10 +45,8 @@ spec:
     ports:
       - protocol: TCP
         port: {{ .Values.containerPort }}
-  # ========== END ==========
 
   egress:
-    # Allow calling sibling microservices
     {{- if .Values.networkpolicy.allowToServices }}
     {{- range $svc := .Values.networkpolicy.allowToServices }}
     - to:
@@ -65,7 +59,6 @@ spec:
     {{- end }}
     {{- end }}
 
-    # ========== ADD THIS: Allow egress to monitoring ==========
     - to:
         - namespaceSelector:
             matchLabels:
@@ -77,9 +70,7 @@ spec:
           port: 4318  # OTLP HTTP
         - protocol: TCP
           port: 3100  # Loki
-    # ========== END ==========
 
-    # Allow DNS + external APIs + External Secrets Operator
     - to:
         - namespaceSelector: {}
       ports:

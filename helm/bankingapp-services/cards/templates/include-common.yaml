@@ -27,3 +27,7 @@
 ---
 
 {{- include "common.servicemonitor" . }}
+
+---
+
+{{ include "common.poddisruptionbudget" . }}
