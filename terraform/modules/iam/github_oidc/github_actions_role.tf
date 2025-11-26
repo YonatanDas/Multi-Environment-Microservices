@@ -26,11 +26,18 @@ resource "aws_iam_policy" "github_actions_policy" {
     Version = "2012-10-17"
     Statement = [
 
-      # Push & Pull from ECR
+      # ECR Authorization (required for all ECR operations)
       {
         Effect = "Allow"
         Action = [
-          "ecr:GetAuthorizationToken",
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      # Push & Pull from specific ECR repositories
+      {
+        Effect = "Allow"
+        Action = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer",
@@ -40,10 +47,10 @@ resource "aws_iam_policy" "github_actions_policy" {
           "ecr:PutImage",
           "ecr:DescribeRepositories"
         ]
-        Resource = "*"
+        Resource = length(var.ecr_repository_arns) > 0 ? var.ecr_repository_arns : ["*"]
       },
 
-      # EKS access (depending on your security level)
+      # S3 access for artifact storage
       {
         "Effect" : "Allow",
         "Action" : [
@@ -53,19 +60,9 @@ resource "aws_iam_policy" "github_actions_policy" {
           "s3:ListBucket"
         ]
         "Resource" : [
-          "arn:aws:s3:::my-ci-artifacts55",
-          "arn:aws:s3:::my-ci-artifacts55/*"
+          "arn:aws:s3:::${var.artifacts_s3_bucket}",
+          "arn:aws:s3:::${var.artifacts_s3_bucket}/*"
         ]
-      },
-
-      # kubectl access (via auth token)
-      {
-        Effect = "Allow"
-        Action = [
-          "sts:AssumeRole",
-          "sts:AssumeRoleWithWebIdentity"
-        ]
-        Resource = "*"
       }
     ]
   })

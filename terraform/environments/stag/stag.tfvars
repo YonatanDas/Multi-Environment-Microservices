@@ -1,7 +1,7 @@
 # Terraform variables for the Staging environment
 ############################################
 environment    = "stag"
-aws_account_id = "YOUR_AWS_ACCOUNT_ID_HERE"
+aws_account_id = "063630846340"
 
 # EKS Cluster Name
 ############################################
@@ -23,4 +23,4 @@ node_max_size         = 4
 db_instance_class       = "db.m5.medium"
 db_username             = "bankingdb"
 backup_retention_period = 7
-deletion_protection     = false
+deletion_protection     = true
