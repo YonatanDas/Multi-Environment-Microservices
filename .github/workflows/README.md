@@ -42,7 +42,7 @@ GitHub Actions workflows automate the entire software delivery lifecycle: **buil
 
 ### Microservices CI/CD pipeline (`Microservice-Ci.yaml`)
 
-**Trigger**: Push/PR to `main` branch when `01-accounts/`, `02-cards/`, `03-loans/`, or `04-gatewayserver/` directories change
+**Trigger**: Push/PR to `main` branch when `services/accounts/`, `services/cards/`, `services/loans/`, or `services/gateway/` directories change
 
 **Pipeline stages**:
 1. **Service detection**: `dorny/paths-filter` identifies changed services
@@ -92,7 +92,7 @@ GitHub Actions workflows automate the entire software delivery lifecycle: **buil
 
 ### Trigger microservices CI
 
-Push changes to `01-accounts/`, `02-cards/`, `03-loans/`, or `04-gatewayserver/` directories:
+Push changes to `services/accounts/`, `services/cards/`, `services/loans/`, or `services/gateway/` directories:
 ```bash
 git commit -m "Update accounts service"
 git push origin main

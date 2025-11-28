@@ -5,29 +5,21 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "Feature/platform-modularization" ]
     paths:
-      - "01-accounts/**"
-      - "02-cards/**"
-      - "03-loans/**"
-      - "04-gatewayserver/**"
-  pull_request:
-    paths:
-      - "01-accounts/**"
-      - "02-cards/**"
-      - "03-loans/**"
-      - "04-gatewayserver/**"
+      - "services/**"
 
 permissions:
   contents: write
   id-token: write
 
 env:
-  AWS_REGION: us-east-1
-  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION || 'us-east-1' }}.amazonaws.com
   AWS_ROLE: github-actions-eks-ecr-role
-  Artifacts_S3_Bucket: my-ci-artifacts55
+  Artifacts_S3_Bucket: ${{ secrets.ARTIFACTS_S3_BUCKET || 'my-ci-artifacts55' }}
   Artifacts_S3_Prefix: Ci-Artifacts
   Artifacts_Folder: collected-artifacts
   WORKFLOW_NAME: Microservices-CI
@@ -40,14 +32,16 @@ jobs:
       services: ${{ steps.detect.outputs.changes }}
     steps:
       - uses: actions/checkout@v3
-      - uses: dorny/paths-filter@v3
-        id: detect
-        with:
-          filters: |
-            accounts: '01-accounts/**'
-            cards: '02-cards/**'
-            loans: '03-loans/**'
-            gatewayserver: '04-gatewayserver/**'
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      - id: detect
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          chmod +x .github/platform/scripts/*.sh
+          .github/platform/scripts/discover-services.sh
         
   # -------------------------------
   # LINT & UNIT TESTS
@@ -59,20 +53,18 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
-          SERVICE: ${{ matrix.SERVICE }}
+      SERVICE: ${{ matrix.service }}
 
     steps:
       - uses: actions/checkout@v3
-      - name: Resolve service directory
+      - name: Install yq
         run: |
-          case "${{ matrix.SERVICE }}" in
-            accounts) dir="01-accounts" ;;
-            cards) dir="02-cards" ;;
-            loans) dir="03-loans" ;;
-            gatewayserver) dir="04-gatewayserver" ;;
-            *) echo "Unknown service ${{ matrix.SERVICE }}" >&2; exit 1 ;;
-          esac
-          echo "SERVICE_DIR=./$dir" >> "$GITHUB_ENV"
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+      - name: Resolve service directory from config
+        run: |
+          chmod +x .github/scripts/*.sh
+          ./.github/scripts/00-resolve-service-path.sh "${{ matrix.service }}"
   
       - name: Restore Docker cache
         uses: ./.github/actions/caching
@@ -111,20 +103,18 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
-      SERVICE: ${{ matrix.SERVICE }}
+      SERVICE: ${{ matrix.service }}
 
     steps:
       - uses: actions/checkout@v3
-      - name: Resolve service directory
+      - name: Install yq
         run: |
-          case "${{ matrix.SERVICE }}" in
-            accounts) dir="01-accounts" ;;
-            cards) dir="02-cards" ;;
-            loans) dir="03-loans" ;;
-            gatewayserver) dir="04-gatewayserver" ;;
-            *) echo "Unknown service ${{ matrix.SERVICE }}" >&2; exit 1 ;;
-          esac
-          echo "SERVICE_DIR=./$dir" >> "$GITHUB_ENV"
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+      - name: Resolve service directory from config
+        run: |
+          chmod +x .github/scripts/*.sh
+          ./.github/scripts/00-resolve-service-path.sh "${{ matrix.service }}"
 
       - name: Make scripts executable
         run: chmod +x .github/scripts/*.sh
@@ -159,7 +149,7 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
-      SERVICE: ${{ matrix.SERVICE }}
+      SERVICE: ${{ matrix.service }}
       AWS_REGION: us-east-1
       REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com 
 
@@ -167,16 +157,19 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Resolve service directory
+      - name: Resolve service directory from config
         run: |
-          case "${{ matrix.SERVICE }}" in
-            accounts) dir="01-accounts" ;;
-            cards) dir="02-cards" ;;
-            loans) dir="03-loans" ;;
-            gatewayserver) dir="04-gatewayserver" ;;
-            *) echo "Unknown service ${{ matrix.SERVICE }}" >&2; exit 1 ;;
-          esac
-          echo "SERVICE_DIR=./$dir" >> "$GITHUB_ENV"
+          chmod +x .github/scripts/*.sh
+          # Install yq if not already installed
+          if ! command -v yq &> /dev/null; then
+            wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            chmod +x /usr/local/bin/yq
+          fi
+          ./.github/scripts/00-resolve-service-path.sh "${{ matrix.service }}"
+      - name: Validate service.yaml
+        run: |
+          chmod +x .github/platform/scripts/validate-service-yaml.sh
+          .github/platform/scripts/validate-service-yaml.sh "services/${{ matrix.service }}/service.yaml"
       - name: Setup AWS + ECR
         uses: ./.github/actions/env-setup
         with:
@@ -212,6 +205,20 @@ jobs:
       - name: Update Docker Cache
         run: ./.github/scripts/05-docker-cache-cleanup.sh
 
+      - name: Generate Helm chart if new service
+        run: |
+          chmod +x .github/platform/scripts/generate-service-chart.sh
+          if [ ! -d "06-helm/bankingapp-services/${{ matrix.service }}" ]; then
+            .github/platform/scripts/generate-service-chart.sh "${{ matrix.service }}"
+          else
+            echo "Chart already exists for ${{ matrix.service }}, skipping generation."
+          fi
+
+      - name: Update environment Chart dependencies
+        run: |
+          chmod +x .github/platform/scripts/update-env-chart.sh
+          .github/platform/scripts/update-env-chart.sh "${{ matrix.service }}"
+
       - name: Update Helm Image Tags
         run: ./.github/scripts/14-update-helm-values.sh \
             "${{ env.SERVICE }}" \
@@ -236,19 +243,18 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
-      SERVICE: ${{ matrix.SERVICE }}
+      SERVICE: ${{ matrix.service }}
     steps:
     - uses: actions/checkout@v3
-    - name: Resolve service directory
+    - name: Resolve service directory from config
       run: |
-        case "${{ matrix.SERVICE }}" in
-          accounts) dir="01-accounts" ;;
-          cards) dir="02-cards" ;;
-          loans) dir="03-loans" ;;
-          gatewayserver) dir="04-gatewayserver" ;;
-          *) echo "Unknown service ${{ matrix.SERVICE }}" >&2; exit 1 ;;
-        esac
-        echo "SERVICE_DIR=./$dir" >> "$GITHUB_ENV"
+        chmod +x .github/scripts/*.sh
+        # Install yq if not already installed
+        if ! command -v yq &> /dev/null; then
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+        fi
+        ./.github/scripts/00-resolve-service-path.sh "${{ matrix.service }}"
     - name: Setup AWS + ECR
       uses: ./.github/actions/env-setup
       with:
@@ -262,8 +268,8 @@ jobs:
     - name: Trivy Image Scan & SBOM
       run: |
         ./.github/scripts/07-image-scan-sbom.sh \
-          "${{ env.REGISTRY }}/${{ matrix.SERVICE }}:${{ github.run_number }}" \
-          ".ci-artifacts/Trivy-reports/${{ matrix.SERVICE }}/${{ github.sha }}" \
+          "${{ env.REGISTRY }}/${{ matrix.service }}:${{ github.run_number }}" \
+          ".ci-artifacts/Trivy-reports/${{ matrix.service }}/${{ github.sha }}" \
           "false" 
 
     - name: Upload Trivy Artifacts
@@ -283,19 +289,18 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.services-changed.outputs.services) }}
     env:
-      SERVICE: ${{ matrix.SERVICE }}
+      SERVICE: ${{ matrix.service }}
     steps:
     - uses: actions/checkout@v3
-    - name: Resolve service directory
+    - name: Resolve service directory from config
       run: |
-        case "${{ matrix.SERVICE }}" in
-          accounts) dir="01-accounts" ;;
-          cards) dir="02-cards" ;;
-          loans) dir="03-loans" ;;
-          gatewayserver) dir="04-gatewayserver" ;;
-          *) echo "Unknown service ${{ matrix.SERVICE }}" >&2; exit 1 ;;
-        esac
-        echo "SERVICE_DIR=./$dir" >> "$GITHUB_ENV"
+        chmod +x .github/scripts/*.sh
+        # Install yq if not already installed
+        if ! command -v yq &> /dev/null; then
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+        fi
+        ./.github/scripts/00-resolve-service-path.sh "${{ matrix.service }}"
     - name: Setup AWS + ECR
       uses: ./.github/actions/env-setup
       with:
