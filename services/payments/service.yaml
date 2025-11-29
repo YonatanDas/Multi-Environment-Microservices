@@ -1,6 +1,6 @@
 metadata:
   name: payments
-  description: Payments microservice (example new service)
+  description: Payments microservice (example new services)
 
 container:
   port: 8085
